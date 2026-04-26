@@ -22,11 +22,12 @@ if [ -n "${CLANG_DIR:-}" ] && [ ! -x "$CLANG_DIR/bin/clang" ]; then
         AUTH_HDR=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
     fi
     # ZyCromerZ alternates clang 15.x (LTS) and clang 23.x (git-tip) builds.
-    # Empirically clang 15 produces a kernel that progresses further on peridot
-    # (init runs, then dies); clang 23 git-tip regresses — kernel hangs at
-    # bootloader handoff. Stock peridot uses clang 21 (between the two).
-    # Default to 15 (LTS, stable) until we have a clang 21 source.
-    CLANG_MAJOR="${CLANG_MAJOR:-15}"
+    # peridot's vendor_dlkm modules require CFI_CLANG=y at the ABI level
+    # (CFI changes indirect-call signatures); CFI_CLANG depends on
+    # cc-option=-fsanitize=kcfi which needs clang >= 17.
+    # clang 15 was producing CFI=n kernels that vendor modules then refused
+    # to bind to. Use clang 23 git-tip (closest to stock's clang 21).
+    CLANG_MAJOR="${CLANG_MAJOR:-23}"
     ASSET_URL="$(curl -fsSL "${AUTH_HDR[@]}" \
         "https://api.github.com/repos/${CLANG_REPO}/releases?per_page=30" \
         | grep '"browser_download_url"' \
