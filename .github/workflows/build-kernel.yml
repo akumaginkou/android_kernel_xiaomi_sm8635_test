@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       kernel_branch:
-        description: "peridot-dev/android_kernel_xiaomi_sm8635 branch"
+        description: "Evolution-X-Devices/kernel_xiaomi_sm8635 branch (bka = matches shipped EvolutionX boot.img)"
         type: string
-        default: "lineage-23.2"
+        default: "bka"
       resukisu_tag:
         description: "ReSukiSU branch/tag (no tagged releases yet — use 'main')"
         type: string
@@ -51,7 +51,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     env:
-      KERNEL_BRANCH: ${{ github.event.inputs.kernel_branch || 'lineage-23.2' }}
+      KERNEL_BRANCH: ${{ github.event.inputs.kernel_branch || 'bka' }}
       RESUKISU_TAG:  ${{ github.event.inputs.resukisu_tag  || 'main' }}
       SUSFS_BRANCH:  ${{ github.event.inputs.susfs_branch  || 'gki-android14-6.1' }}
       SUSFS_REF:     ${{ github.event.inputs.susfs_ref     || '' }}

@@ -10,9 +10,16 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 export WORKDIR="${WORKDIR:-$PROJECT_ROOT/work}"
 export OUTDIR="${OUTDIR:-$PROJECT_ROOT/out}"
 
-# Kernel source: peridot-dev (AOSP-style fork, lineage-23.2 = Android 16 / kernel 6.1)
-export KERNEL_REPO="${KERNEL_REPO:-https://github.com/peridot-dev/android_kernel_xiaomi_sm8635.git}"
-export KERNEL_BRANCH="${KERNEL_BRANCH:-lineage-23.2}"
+# Kernel source: Evolution-X-Devices/kernel_xiaomi_sm8635 (Android 16 / kernel 6.1).
+#
+# Switched off peridot-dev/lineage-23.2: that fork's HEAD (b4f702358b97) is
+# NOT the commit EvolutionX 11.6.4 ships in its boot.img. The shipped kernel
+# advertises scmversion -g19c833c43b24 which only exists in
+# Evolution-X-Devices/kernel_xiaomi_sm8635 @ branch `bka`. EvolutionX's
+# vendor_dlkm modules are CRC-signed against THAT KMI, so a kernel built
+# from any other commit won't load them and userspace dies in early init.
+export KERNEL_REPO="${KERNEL_REPO:-https://github.com/Evolution-X-Devices/kernel_xiaomi_sm8635.git}"
+export KERNEL_BRANCH="${KERNEL_BRANCH:-bka}"
 export KERNEL_DIR="${KERNEL_DIR:-$WORKDIR/kernel}"
 
 # AnyKernel3 (osm0sis upstream)
