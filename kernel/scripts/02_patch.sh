@@ -78,4 +78,18 @@ if [ -f "$KSU_PATCH" ] && [ -d KernelSU-Next ]; then
     fi
 fi
 
+# ---- 4. Hotfix: missing sepolicy declarations in legacy-susfs HEAD ---------
+# The "Add SUSFS support (#1237)" commit (4cc162e, 2026-04-23) on the
+# legacy-susfs branch introduced calls to ksu_dup_sepolicy() and
+# ksu_destroy_sepolicy() in selinux/rules.c, but forgot to add their
+# prototypes to selinux/sepolicy.h. Build dies with:
+#   error: call to undeclared function 'ksu_dup_sepolicy'
+#   error: call to undeclared function 'ksu_destroy_sepolicy'
+# Inject the prototypes ourselves until upstream fixes it.
+SEPOL_H="KernelSU-Next/kernel/selinux/sepolicy.h"
+if [ -f "$SEPOL_H" ] && ! grep -q "ksu_dup_sepolicy" "$SEPOL_H"; then
+    echo "[patch] hotfix: declaring ksu_dup_sepolicy / ksu_destroy_sepolicy in sepolicy.h"
+    sed -i 's|^#endif$|struct selinux_policy;\nstruct selinux_policy *ksu_dup_sepolicy(struct selinux_policy *old_pol);\nvoid ksu_destroy_sepolicy(struct selinux_policy *pol);\n\n#endif|' "$SEPOL_H"
+fi
+
 echo "[patch] done."
