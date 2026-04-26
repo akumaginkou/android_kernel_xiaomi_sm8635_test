@@ -25,6 +25,21 @@ fi
 cp "$IMAGE" "$ANYKERNEL_DIR/Image"
 [ -f "$IMAGE_GZ" ] && cp "$IMAGE_GZ" "$ANYKERNEL_DIR/Image.gz"
 
+# AnyKernel3's update-binary runs `busybox --install -s bin` at flash time,
+# which requires bin/ to exist. Git doesn't track empty dirs so the upstream
+# repo ships without bin/ — create it (with a sentinel so zip preserves it).
+mkdir -p "$ANYKERNEL_DIR/bin"
+: > "$ANYKERNEL_DIR/bin/.placeholder"
+
+# Sanity-check that the busybox binary is actually present and looks like an
+# ELF (catches LFS-pointer-instead-of-blob regressions).
+BB="$ANYKERNEL_DIR/tools/busybox"
+if [ ! -s "$BB" ] || ! head -c 4 "$BB" | grep -q ELF; then
+    echo "[pack] ERROR: $BB missing or not an ELF binary." >&2
+    ls -l "$ANYKERNEL_DIR/tools" >&2 || true
+    exit 1
+fi
+
 # Zip it.
 mkdir -p "$OUTDIR"
 ZIP_PATH="$OUTDIR/$ZIP_NAME"
@@ -32,3 +47,6 @@ ZIP_PATH="$OUTDIR/$ZIP_NAME"
 
 echo "[pack] wrote $ZIP_PATH"
 ls -lh "$ZIP_PATH"
+echo "[pack] zip contents (top level):"
+unzip -l "$ZIP_PATH" | awk 'NR>3 && $4 !~ "/" {print}' | head -20
+unzip -l "$ZIP_PATH" | grep -E "tools/busybox|bin/" | head -10
