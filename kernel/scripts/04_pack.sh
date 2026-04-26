@@ -30,8 +30,21 @@ if [ -f "$PERIDOT_AK_CONF" ]; then
 fi
 
 # Drop the kernel binary into AnyKernel3.
-cp "$IMAGE" "$ANYKERNEL_DIR/Image"
-[ -f "$IMAGE_GZ" ] && cp "$IMAGE_GZ" "$ANYKERNEL_DIR/Image.gz"
+# AK3's flash_boot picks kernels in priority order:
+#   zImage, zImage-dtb, Image, Image-dtb, Image.gz, Image.gz-dtb, ...
+# If we ship both `Image` and `Image.gz`, AK3 uses the uncompressed
+# Image — but magiskboot then tries to fit it into a slot sized for
+# the original (compressed) kernel and `magiskboot repack` aborts with
+# "Repacking image failed". peridot's stock boot.img uses gzipped
+# kernel, so ship only Image.gz when present and skip raw Image.
+if [ -f "$IMAGE_GZ" ]; then
+    echo "[pack] using Image.gz (compressed) — peridot boot.img expects gzipped kernel"
+    cp "$IMAGE_GZ" "$ANYKERNEL_DIR/Image.gz"
+    rm -f "$ANYKERNEL_DIR/Image"  # ensure no leftover from upstream AK3
+else
+    echo "[pack] Image.gz not found, falling back to raw Image"
+    cp "$IMAGE" "$ANYKERNEL_DIR/Image"
+fi
 
 # AnyKernel3's update-binary runs `busybox --install -s bin` at flash time,
 # which requires bin/ to exist. Git doesn't track empty dirs so the upstream
