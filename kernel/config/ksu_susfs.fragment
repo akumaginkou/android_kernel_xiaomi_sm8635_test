@@ -43,4 +43,17 @@ CONFIG_KSU_SUSFS_OPEN_REDIRECT=y
 CONFIG_KSU_SUSFS_SUS_MAP=y
 
 # --- Build identification ---------------------------------------------------
-CONFIG_LOCALVERSION="-PeridotReSukiSU"
+# Empty LOCALVERSION + LOCALVERSION_AUTO=n keeps vermagic close to the
+# stock peridot kernel string. Vendor modules (vendor_dlkm) on peridot
+# are built against a specific vermagic; if the vermagic strings drift
+# the modules fail to load and the device boot-loops because vendor
+# init.rc waits on those drivers. Setting a custom LOCALVERSION
+# (e.g. "-PeridotReSukiSU") *does* break this on first boot — we tried.
+#
+# Belt-and-suspenders: also enable MODULE_FORCE_LOAD so the kernel
+# accepts vendor modules whose vermagic still differs slightly (signed
+# build counter, etc.). MODVERSIONS still ensures symbol-CRC matching
+# so this is not as unsafe as it sounds.
+CONFIG_LOCALVERSION=""
+# CONFIG_LOCALVERSION_AUTO is NOT set
+CONFIG_MODULE_FORCE_LOAD=y

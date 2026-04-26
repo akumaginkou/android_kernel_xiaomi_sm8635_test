@@ -7,8 +7,10 @@
 ## causes "Repacking image failed" / "Busybox setup failed" on this device.
 
 ### Properties
+# do.cleanuponabort=0 keeps /tmp/anykernel/ around if flash aborts so
+# we can `adb shell cat /tmp/recovery.log` and see the real failure.
 properties() { '
-kernel.string=PeridotReSukiSU (KSU + SUSFS) by akumaginkou
+kernel.string=peridot kernel (ReSukiSU + SUSFS) by akumaginkou
 do.devicecheck=1
 do.modules=0
 do.systemless=0
