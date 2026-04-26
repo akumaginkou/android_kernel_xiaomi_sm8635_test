@@ -23,6 +23,10 @@ on:
         description: "MINIMAL diagnostic build: KSU only (no SUSFS, no extras). Use to isolate boot loop cause."
         type: boolean
         default: false
+      pure:
+        description: "PURE diagnostic build: no KSU at all, just stock peridot kernel rebuilt. Use to test build-pipeline soundness."
+        type: boolean
+        default: false
       release:
         description: "Attach zip to a GitHub Release"
         type: boolean
@@ -52,6 +56,7 @@ jobs:
       SUSFS_BRANCH:  ${{ github.event.inputs.susfs_branch  || 'gki-android14-6.1' }}
       SUSFS_REF:     ${{ github.event.inputs.susfs_ref     || '' }}
       MINIMAL_BUILD: ${{ github.event.inputs.minimal       || 'false' }}
+      PURE_BUILD:    ${{ github.event.inputs.pure          || 'false' }}
       WORKDIR:       ${{ github.workspace }}/work
       OUTDIR:        ${{ github.workspace }}/out
       CCACHE_DIR:    ${{ github.workspace }}/.ccache
@@ -93,7 +98,15 @@ jobs:
         run: bash kernel/scripts/01_clone.sh
 
       - name: Install ReSukiSU + apply susfs4ksu kernel patches
+        if: ${{ env.PURE_BUILD != 'true' }}
         run: bash kernel/scripts/02_patch.sh
+
+      - name: (PURE) skip all KSU/SUSFS integration, build stock kernel only
+        if: ${{ env.PURE_BUILD == 'true' }}
+        run: |
+          echo "[pure] removing all defconfig fragments — building plain stock peridot kernel"
+          rm -f kernel/config/*.fragment
+          echo "KERNEL_NAME=PeridotPure" >> $GITHUB_ENV
 
       - name: (MINIMAL) swap fragments to KSU-only diagnostic config
         if: ${{ env.MINIMAL_BUILD == 'true' }}
@@ -126,7 +139,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.MINIMAL_BUILD == 'true' && 'PeridotMinimal' || 'PeridotReSukiSU' }}-AnyKernel3-${{ github.run_number }}
+          name: ${{ env.PURE_BUILD == 'true' && 'PeridotPure' || (env.MINIMAL_BUILD == 'true' && 'PeridotMinimal' || 'PeridotReSukiSU') }}-AnyKernel3-${{ github.run_number }}
           path: out/*.zip
           if-no-files-found: error
           retention-days: 30
