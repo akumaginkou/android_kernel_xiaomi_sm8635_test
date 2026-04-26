@@ -1,0 +1,7 @@
+# Always commit Unix line endings for files that run on Linux.
+# Shell scripts with CRLF die with `bad interpreter: /usr/bin/env bash^M`.
+*.sh         text eol=lf
+*.fragment   text eol=lf
+Dockerfile*  text eol=lf
+*.yml        text eol=lf
+*.yaml       text eol=lf

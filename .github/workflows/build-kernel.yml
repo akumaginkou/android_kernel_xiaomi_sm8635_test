@@ -1,0 +1,114 @@
+name: Build peridot kernel (KSU-Next + SUSFS)
+
+on:
+  workflow_dispatch:
+    inputs:
+      kernel_branch:
+        description: "peridot-dev/android_kernel_xiaomi_sm8635 branch"
+        type: string
+        default: "lineage-23.2"
+      ksu_next_tag:
+        description: "KernelSU-Next setup.sh tag"
+        type: string
+        default: "next-susfs"
+      susfs_branch:
+        description: "susfs4ksu branch (must match kernel KMI)"
+        type: string
+        default: "gki-android15-6.1"
+      release:
+        description: "Attach zip to a GitHub Release"
+        type: boolean
+        default: false
+      release_tag:
+        description: "Release tag (used when release=true)"
+        type: string
+        default: ""
+  push:
+    branches: [main]
+    paths:
+      - "kernel/**"
+      - ".github/workflows/build-kernel.yml"
+      - "Dockerfile.kernel"
+
+concurrency:
+  group: build-kernel-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      KERNEL_BRANCH: ${{ github.event.inputs.kernel_branch || 'lineage-23.2' }}
+      KSU_NEXT_TAG:  ${{ github.event.inputs.ksu_next_tag  || 'next-susfs' }}
+      SUSFS_BRANCH:  ${{ github.event.inputs.susfs_branch  || 'gki-android15-6.1' }}
+      WORKDIR:       ${{ github.workspace }}/work
+      OUTDIR:        ${{ github.workspace }}/out
+      CCACHE_DIR:    ${{ github.workspace }}/.ccache
+      USE_CCACHE:    "1"
+      CCACHE_MAXSIZE: "4G"
+
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                      /usr/local/share/boost "$AGENT_TOOLSDIRECTORY" || true
+          df -h /
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            bc bison build-essential ccache curl flex git \
+            libelf-dev liblz4-tool libssl-dev libxml2-utils \
+            cpio rsync zip unzip xz-utils \
+            python3 python-is-python3 \
+            clang lld llvm
+          clang --version | head -1
+
+      - name: Restore ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key:  ccache-peridot-${{ env.KERNEL_BRANCH }}-${{ github.sha }}
+          restore-keys: |
+            ccache-peridot-${{ env.KERNEL_BRANCH }}-
+            ccache-peridot-
+
+      - name: Clone kernel + KSU-Next + SUSFS + AnyKernel3
+        run: bash kernel/scripts/01_clone.sh
+
+      - name: Apply KSU-Next + SUSFS patches
+        run: bash kernel/scripts/02_patch.sh
+
+      - name: Build kernel Image
+        run: bash kernel/scripts/03_build.sh
+
+      - name: Pack AnyKernel3 zip
+        run: bash kernel/scripts/04_pack.sh
+
+      - name: Show ccache stats
+        if: always()
+        run: ccache -s || true
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PeridotKSU-AnyKernel3-${{ github.run_number }}
+          path: out/*.zip
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Create / update Release
+        if: ${{ github.event.inputs.release == 'true' && github.event.inputs.release_tag != '' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.release_tag }}
+          name: ${{ github.event.inputs.release_tag }}
+          files: out/*.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

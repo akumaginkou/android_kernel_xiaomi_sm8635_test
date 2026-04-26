@@ -1,0 +1,45 @@
+# syntax=docker/dockerfile:1.6
+# Lightweight kernel build environment for peridot (SM8635 / Android 16 GKI 6.1).
+# ~1.5 GB image vs the full ROM Dockerfile's ~6 GB.
+FROM ubuntu:24.04
+
+ARG USER_UID=1000
+ARG USER_GID=1000
+ARG USER_NAME=builder
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    LANG=en_US.UTF-8 \
+    LC_ALL=en_US.UTF-8 \
+    TZ=Asia/Tokyo \
+    USE_CCACHE=1 \
+    CCACHE_DIR=/home/${USER_NAME}/.ccache
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates locales tzdata sudo gosu \
+        bc bison build-essential ccache curl flex \
+        git git-lfs gnupg \
+        libelf-dev liblz4-tool libssl-dev \
+        libxml2-utils \
+        cpio rsync zip unzip xz-utils \
+        python3 python-is-python3 \
+        clang lld llvm \
+        nano less file procps \
+    && rm -rf /var/lib/apt/lists/* \
+    && locale-gen en_US.UTF-8 \
+    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
+    && echo $TZ > /etc/timezone
+
+# Match host UID so bind-mounts don't end up root-owned on Linux hosts.
+# (On Windows / Docker Desktop the UID of the mount is virtualised, so this is harmless.)
+RUN groupadd -g ${USER_GID} ${USER_NAME} \
+ && useradd -m -u ${USER_UID} -g ${USER_GID} -s /bin/bash ${USER_NAME} \
+ && echo "${USER_NAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USER_NAME} \
+ && chmod 0440 /etc/sudoers.d/${USER_NAME} \
+ && mkdir -p /work /home/${USER_NAME}/.ccache \
+ && chown -R ${USER_UID}:${USER_GID} /home/${USER_NAME} /work
+
+ENV HOME=/home/${USER_NAME}
+USER ${USER_NAME}
+WORKDIR /work
+
+CMD ["bash"]

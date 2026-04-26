@@ -1,0 +1,36 @@
+# KernelSU-Next + SUSFS enablement fragment.
+# Merged on top of `gki_defconfig vendor/peridot_GKI.config` by 03_build.sh
+# via scripts/kconfig/merge_config.sh.
+
+# --- KernelSU-Next core -----------------------------------------------------
+CONFIG_KSU=y
+CONFIG_KSU_DEBUG=n
+# Disable kprobe-based hooks; KSU-Next next-susfs branch uses manual hooks.
+CONFIG_KSU_KPROBES_HOOK=n
+CONFIG_KSU_MANUAL_HOOK=y
+# SU compatibility (recommended for broader app support)
+CONFIG_KSU_SUSFS_SUS_SU=y
+
+# --- SUSFS feature toggles --------------------------------------------------
+CONFIG_KSU_SUSFS=y
+CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y
+CONFIG_KSU_SUSFS_SUS_PATH=y
+CONFIG_KSU_SUSFS_SUS_MOUNT=y
+CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=y
+CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=y
+CONFIG_KSU_SUSFS_SUS_KSTAT=y
+CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y
+CONFIG_KSU_SUSFS_TRY_UMOUNT=y
+CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=y
+CONFIG_KSU_SUSFS_SPOOF_UNAME=y
+CONFIG_KSU_SUSFS_ENABLE_LOG=y
+CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y
+CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y
+CONFIG_KSU_SUSFS_OPEN_REDIRECT=y
+
+# --- Required for module signing tolerance / SU env -------------------------
+CONFIG_TMPFS_XATTR=y
+CONFIG_TMPFS_POSIX_ACL=y
+
+# --- Build identification ---------------------------------------------------
+CONFIG_LOCALVERSION="-PeridotKSU"

@@ -1,0 +1,30 @@
+services:
+  kernel-builder:
+    build:
+      context: .
+      dockerfile: Dockerfile.kernel
+      args:
+        USER_UID: "1000"
+        USER_GID: "1000"
+        USER_NAME: "builder"
+    image: peridot-kernel-builder:u24
+    container_name: peridot-kernel-builder
+    hostname: kernel-builder
+    stdin_open: true
+    tty: true
+    working_dir: /work
+    volumes:
+      # Mount the project root so scripts/, config/, anykernel/ are visible.
+      - .:/work
+      # Persistent ccache.
+      - kernel_ccache:/home/builder/.ccache
+    environment:
+      USE_CCACHE: "1"
+      CCACHE_DIR: /home/builder/.ccache
+      CCACHE_MAXSIZE: "5G"
+      WORKDIR: /work/work
+      OUTDIR: /work/out
+    shm_size: "2g"
+
+volumes:
+  kernel_ccache:

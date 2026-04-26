@@ -1,0 +1,18 @@
+# Build workspaces
+work/
+out/
+.ccache/
+
+# Editor / OS / tooling
+.vscode/
+.idea/
+.claude/
+.DS_Store
+Thumbs.db
+
+# Build artefacts
+*.img
+*.zip
+*.tar
+*.tar.gz
+*.log
