@@ -23,9 +23,15 @@ export ANYKERNEL_REPO="${ANYKERNEL_REPO:-https://github.com/osm0sis/AnyKernel3.g
 export ANYKERNEL_BRANCH="${ANYKERNEL_BRANCH:-master}"
 export ANYKERNEL_DIR="${ANYKERNEL_DIR:-$WORKDIR/AnyKernel3}"
 
-# KernelSU-Next: official setup script. Tag "next-susfs" pulls the SUSFS-aware branch.
+# KernelSU-Next.
+# IMPORTANT: the branch arg passed to setup.sh must be a *real* branch name
+# in the KSU-Next repo. Suffixed branches such as `next-susfs-a14-6.1-dev`
+# are the SUSFS-aware variants matched to a specific kernel KMI. The bare
+# name `next-susfs` looks plausible but does NOT exist; setup.sh silently
+# falls back to the default branch (no SUSFS) when the checkout fails.
+#   peridot lineage-23.2 = kernel 6.1 -> next-susfs-a14-6.1-dev
 export KSU_NEXT_INSTALLER="${KSU_NEXT_INSTALLER:-https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh}"
-export KSU_NEXT_TAG="${KSU_NEXT_TAG:-next-susfs}"
+export KSU_NEXT_TAG="${KSU_NEXT_TAG:-next-susfs-a14-6.1-dev}"
 
 # SUSFS (simonpunk). Branch must match the kernel version, NOT the Android
 # version. Google GKI naming convention is `gki-android<N>-<kver>` and the

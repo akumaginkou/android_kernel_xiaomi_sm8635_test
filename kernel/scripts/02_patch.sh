@@ -6,13 +6,23 @@ cd "$KERNEL_DIR"
 
 # ---- 1. Install KernelSU-Next ----------------------------------------------
 # The official setup.sh adds drivers/kernelsu and patches Makefile/Kconfig.
-# Tag "next-susfs" pulls the SUSFS-aware branch.
+# KSU_NEXT_TAG must be a real branch name (e.g. next-susfs-a14-6.1-dev for
+# kernel 6.1). setup.sh silently falls back to the default branch on a bad
+# ref; we verify below to fail loudly instead.
 if [ ! -d KernelSU-Next ]; then
     echo "[patch] installing KernelSU-Next ($KSU_NEXT_TAG)"
     curl -LSs "$KSU_NEXT_INSTALLER" | bash -s "$KSU_NEXT_TAG"
 else
     echo "[patch] KernelSU-Next already present, skipping installer"
 fi
+
+ACTUAL_BRANCH="$(git -C KernelSU-Next rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
+if [ "$ACTUAL_BRANCH" != "$KSU_NEXT_TAG" ]; then
+    echo "[patch] ERROR: KernelSU-Next is on '$ACTUAL_BRANCH', expected '$KSU_NEXT_TAG'." >&2
+    echo "[patch] setup.sh silently fell back. Verify '$KSU_NEXT_TAG' exists in KernelSU-Next." >&2
+    exit 1
+fi
+echo "[patch] KernelSU-Next on branch $ACTUAL_BRANCH"
 
 # ---- 2. Apply SUSFS kernel-side patch --------------------------------------
 SUSFS_PATCHES="$SUSFS_DIR/kernel_patches"

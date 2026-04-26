@@ -10,7 +10,7 @@ on:
       ksu_next_tag:
         description: "KernelSU-Next setup.sh tag"
         type: string
-        default: "next-susfs"
+        default: "next-susfs-a14-6.1-dev"
       susfs_branch:
         description: "susfs4ksu branch (must match kernel KMI)"
         type: string
@@ -40,7 +40,7 @@ jobs:
     timeout-minutes: 90
     env:
       KERNEL_BRANCH: ${{ github.event.inputs.kernel_branch || 'lineage-23.2' }}
-      KSU_NEXT_TAG:  ${{ github.event.inputs.ksu_next_tag  || 'next-susfs' }}
+      KSU_NEXT_TAG:  ${{ github.event.inputs.ksu_next_tag  || 'next-susfs-a14-6.1-dev' }}
       SUSFS_BRANCH:  ${{ github.event.inputs.susfs_branch  || 'gki-android14-6.1' }}
       WORKDIR:       ${{ github.workspace }}/work
       OUTDIR:        ${{ github.workspace }}/out
