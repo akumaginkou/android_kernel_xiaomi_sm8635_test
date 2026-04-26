@@ -74,9 +74,28 @@ if [ "${USE_CCACHE}" = "1" ] && command -v ccache >/dev/null 2>&1; then
     echo "[build] ccache enabled (dir=$CCACHE_DIR, max=$CCACHE_MAXSIZE)"
 fi
 
-# Generate base config from gki_defconfig + peridot vendor fragment.
-echo "[build] make $DEFCONFIG $VENDOR_DEFCONFIG"
-make "${MAKE_ARGS[@]}" "$DEFCONFIG" "$VENDOR_DEFCONFIG"
+# Base config selection.
+#
+# `gki_defconfig + vendor/peridot_GKI.config` does NOT enable the SoC-specific
+# drivers peridot needs (CONFIG_ARCH_CLIFFS, CONFIG_QRTR, CONFIG_CFG80211,
+# CONFIG_ARM_QCOM_CPUFREQ_HW, etc.) — verified by extracting CONFIG_IKCONFIG
+# from the shipped EvolutionX boot.img and diff'ing against our built kernel.
+# Stock has ~8700 config lines; our defconfig+fragment only produced ~7800.
+#
+# To reproduce stock's actual driver set we now seed out/.config with the
+# extracted stock config (kernel/config/stock_base.config) and let
+# olddefconfig fix up any compiler-version-dependent symbols (CFI_CLANG,
+# CLANG_VERSION, AS_VERSION, etc.) before merging our fragments on top.
+STOCK_BASE="$FRAGMENT_DIR/stock_base.config"
+if [ -f "$STOCK_BASE" ]; then
+    echo "[build] using extracted stock base config: $STOCK_BASE"
+    mkdir -p out
+    cp "$STOCK_BASE" out/.config
+    make "${MAKE_ARGS[@]}" olddefconfig
+else
+    echo "[build] make $DEFCONFIG $VENDOR_DEFCONFIG"
+    make "${MAKE_ARGS[@]}" "$DEFCONFIG" "$VENDOR_DEFCONFIG"
+fi
 
 # Merge every *.fragment in kernel/config/ on top of the base .config.
 # Files are applied in lexical order (00_*, ksu_*, extras_*, ...), so name
