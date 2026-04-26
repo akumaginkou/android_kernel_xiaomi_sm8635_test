@@ -66,7 +66,8 @@ jobs:
             libelf-dev liblz4-tool libssl-dev libxml2-utils \
             cpio rsync zip unzip xz-utils \
             python3 python-is-python3 \
-            clang lld llvm
+            clang lld llvm \
+            dwarves
           clang --version | head -1
 
       - name: Restore ccache
