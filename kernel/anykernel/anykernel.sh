@@ -1,37 +1,54 @@
-# AnyKernel3 Ramdisk Mod Script
-# osm0sis @ xda-developers
-#
-# Peridot (Xiaomi POCO F6 / Redmi Turbo 3 — SM8635) configuration.
-# Targets AOSP-based custom ROMs (crDroid, EvolutionX, etc.) on Android 16 / GKI 6.1.
+### AnyKernel3 Ramdisk Mod Script
+## osm0sis @ xda-developers
+##
+## peridot (Xiaomi POCO F6 / Redmi Turbo 3, SM8635) — Android 16 / GKI 6.1
+## Settings here are aligned with the established peridot kernel community
+## conventions (GuidixX, Lu5ck, farrukh2002, ...) — diverging from these
+## causes "Repacking image failed" / "Busybox setup failed" on this device.
 
-## AnyKernel setup
+### Properties
 properties() { '
-kernel.string=PeridotKSU (KernelSU-Next + SUSFS) by akumaginkou
+kernel.string=PeridotReSukiSU (KSU + SUSFS) by akumaginkou
 do.devicecheck=1
 do.modules=0
-do.systemless=1
+do.systemless=0
 do.cleanup=1
 do.cleanuponabort=0
 device.name1=peridot
 device.name2=Peridot
 device.name3=Xiaomi POCO F6
 device.name4=Redmi Turbo 3
-supported.versions=14,15,16
+supported.versions=14 - 16
 supported.patchlevels=
 supported.vendorpatchlevels=
 '; } # end properties
 
-## AnyKernel install
-block=/dev/block/by-name/boot;
-is_slot_device=1;
-ramdisk_compression=auto;
-patch_vbmeta_flag=auto;
+### Boot shell variables
+# Use bare partition name (let AK3 find the right /dev/block/by-name path);
+# auto-detect A/B vs A-only; disable AK3's magisk detection branch which
+# misfires on init_boot devices whose boot.img has an empty ramdisk.
+block=boot
+is_slot_device=auto
+ramdisk_compression=auto
+patch_vbmeta_flag=auto
+no_magisk_check=1
 
 # shell variables
-. tools/ak3-core.sh;
+. tools/ak3-core.sh
 
-## AnyKernel boot install
-# peridot is GKI: replace the kernel image only, keep ramdisk and dtbo intact.
-split_boot;
-flash_boot;
-## end install
+### Boot install
+# peridot is an init_boot device: ramdisk lives in init_boot.img, boot.img
+# carries only the kernel. We dump_boot (no ramdisk processing) +
+# write_boot (no ramdisk repack) to keep magiskboot from trying to
+# touch a ramdisk that isn't there.
+if [ -L "/dev/block/bootdevice/by-name/init_boot_a" -o -L "/dev/block/by-name/init_boot_a" -o \
+     -L "/dev/block/bootdevice/by-name/init_boot"   -o -L "/dev/block/by-name/init_boot"   ]; then
+    ui_print " " "init_boot detected — flashing kernel only into boot partition"
+    dump_boot
+    write_boot
+else
+    ui_print " " "no init_boot — flashing boot partition with full unpack/repack"
+    split_boot
+    flash_boot
+fi
+## end boot install
