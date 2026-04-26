@@ -16,3 +16,8 @@ Thumbs.db
 *.tar
 *.tar.gz
 *.log
+
+# Local diagnostic artifacts
+Image-new
+artifacts/
+*.py
