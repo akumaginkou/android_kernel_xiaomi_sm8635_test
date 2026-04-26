@@ -24,30 +24,32 @@ export ANYKERNEL_BRANCH="${ANYKERNEL_BRANCH:-master}"
 export ANYKERNEL_DIR="${ANYKERNEL_DIR:-$WORKDIR/AnyKernel3}"
 
 # KernelSU-Next.
-# Per the official install guide (https://kernelsu-next.github.io/webpage/),
-# setup.sh accepts a branch/tag. For SUSFS-aware builds we use the
-# `legacy-susfs` branch — but note: this branch only contains the KSU
-# *side* of the SUSFS integration. The kernel-side implementation
-# (linux/susfs.h, fs/susfs.c, hook patches) still has to come from
-# simonpunk/susfs4ksu. The build will fail with "linux/susfs.h: file not
-# found" if susfs4ksu is not applied.
+# We use the `next-susfs-a14-6.1-dev` branch (v1.1.1, KSU 12879) which
+# pairs with susfs4ksu v1.5.x. This pairing is the proven working
+# combination — the newer `legacy-susfs` branch still has unfinished
+# SUSFS integration as of 2026-04 (calls undefined ksu_handle_vfs_fstat
+# etc. that no public susfs variant provides).
 #
-# Other valid setup.sh args:
-#   stable           = v3.2.0 (no SUSFS at all)
-#   legacy           = older non-GKI kernels (no SUSFS)
-#   v3.1.0-legacy-susfs = pinned tag if you want a stable SUSFS variant
+# Manager APK to install on device: KSU-Next v1.1.1 release.
+# Userspace SUSFS UI: sidex15/susfs4ksu-module (requires SUSFS 1.5.2+
+# in kernel, our v1.5.12 satisfies this).
+#
+# Other valid setup.sh args (per official install guide):
+#   stable  = v3.2.0 (no SUSFS at all)
+#   legacy  = older non-GKI kernels
 export KSU_NEXT_INSTALLER="${KSU_NEXT_INSTALLER:-https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh}"
-export KSU_NEXT_TAG="${KSU_NEXT_TAG:-legacy-susfs}"
+export KSU_NEXT_TAG="${KSU_NEXT_TAG:-next-susfs-a14-6.1-dev}"
 
 # SUSFS (simonpunk).
-#   - branch must match kernel KMI: peridot lineage-23.2 = kernel 6.1 ->
+#   - branch matches kernel KMI: peridot lineage-23.2 = kernel 6.1 ->
 #     `gki-android14-6.1` (Google GKI naming caps at android14 for 6.1).
-#   - SUSFS_REF pins a specific commit. KSU-Next legacy-susfs (v3.x)
-#     references the newer susfs v2.x API (sus_map etc.), so we follow HEAD
-#     of the branch. Pin to a specific commit if the API drifts again.
+#   - SUSFS_REF pins commit f16560c = "Bump version to v1.5.12; Synced
+#     with KernelSU main branch ...". This is the last v1.5.x commit
+#     before the v2.0 API rebase. v1.5.12 also satisfies sidex15/
+#     susfs4ksu-module's "SUSFS 1.5.2 or later" requirement.
 export SUSFS_REPO="${SUSFS_REPO:-https://gitlab.com/simonpunk/susfs4ksu.git}"
 export SUSFS_BRANCH="${SUSFS_BRANCH:-gki-android14-6.1}"
-export SUSFS_REF="${SUSFS_REF:-}"
+export SUSFS_REF="${SUSFS_REF:-f16560ce8263fbfa9b2f259e9531f72d6fda4e3f}"
 export SUSFS_DIR="${SUSFS_DIR:-$WORKDIR/susfs4ksu}"
 
 # Build target
