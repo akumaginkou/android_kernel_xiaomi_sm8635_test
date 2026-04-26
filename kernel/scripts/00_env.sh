@@ -54,6 +54,16 @@ export KBUILD_BUILD_HOST="${KBUILD_BUILD_HOST:-peridot-ci}"
 export DEFCONFIG="${DEFCONFIG:-gki_defconfig}"
 export VENDOR_DEFCONFIG="${VENDOR_DEFCONFIG:-vendor/peridot_GKI.config}"
 
+# Toolchain.
+# peridot's stock kernel banner advertises:
+#   Android (... +pgo, +bolt, +lto, +mlgo, based on r563880c) clang 21.0.0
+# Building with Ubuntu 24.04 system clang-18 produces an Image that
+# boot-loops on real hardware (verified with the PURE / no-KSU rebuild
+# also failing — the regression is in our toolchain, not in KSU/SUSFS).
+# Use an AOSP clang prebuilt close to stock. r530567b is a known-good
+# version widely used by the kernel community for android14-6.1 builds.
+export AOSP_CLANG_VERSION="${AOSP_CLANG_VERSION:-r530567b}"
+export CLANG_DIR="${CLANG_DIR:-$WORKDIR/aosp-clang/clang-$AOSP_CLANG_VERSION}"
 export CC="${CC:-clang}"
 export LLVM=1
 export LLVM_IAS=1
