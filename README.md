@@ -22,6 +22,18 @@ LineageOS 23.x, ...).
 > (commit `4cc162e Add SUSFS support`, 2026-04-23). No `susfs4ksu` patches
 > are needed — enabling `CONFIG_KSU_SUSFS=y` is enough.
 
+## Extra kernel features
+
+Configured via `kernel/config/extras.fragment`. Independent of KernelSU —
+delete the file to drop them.
+
+| Feature | What it gives you |
+|---|---|
+| **WireGuard** (`CONFIG_WIREGUARD=y`) | Native in-kernel VPN. tailscale, Mullvad, etc. run faster than via userspace. |
+| **TCP BBR + FQ qdisc** (default congestion control) | Better throughput on high-RTT / lossy links. v1 only — v3 needs ~50 backport patches and is left out for stability. |
+| **NTFS3** | In-kernel NTFS read/write (Paragon driver, mainline since 5.15). Replaces FUSE-based ntfs-3g. |
+| **exFAT improvements** | Force built-in (no first-mount delay), default I/O charset = UTF-8, codepages 437 / 932 (Shift_JIS) preloaded so Windows-formatted SD cards round-trip Japanese filenames correctly. |
+
 ## Repository layout
 
 ```
@@ -37,7 +49,8 @@ LineageOS 23.x, ...).
 │   │   ├── 03_build.sh                  defconfig + clang build
 │   │   └── 04_pack.sh                   Package Image into AnyKernel3 zip
 │   ├── config/
-│   │   └── ksu_susfs.fragment           CONFIG_KSU=y, CONFIG_KSU_SUSFS=y, ...
+│   │   ├── ksu_susfs.fragment           CONFIG_KSU=y, CONFIG_KSU_SUSFS=y, ...
+│   │   └── extras.fragment              WireGuard, BBR, NTFS3, exFAT (UTF-8/JIS)
 │   └── anykernel/
 │       └── anykernel.sh                 peridot-tuned AK3 install script
 ├── out/                                 Build artefacts (.zip)  [gitignored]

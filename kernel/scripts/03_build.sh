@@ -3,7 +3,7 @@ set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/00_env.sh"
 
 JOBS="${JOBS:-$(nproc)}"
-FRAGMENT="$PROJECT_ROOT/kernel/config/ksu_susfs.fragment"
+FRAGMENT_DIR="$PROJECT_ROOT/kernel/config"
 
 cd "$KERNEL_DIR"
 
@@ -37,11 +37,19 @@ fi
 echo "[build] make $DEFCONFIG $VENDOR_DEFCONFIG"
 make "${MAKE_ARGS[@]}" "$DEFCONFIG" "$VENDOR_DEFCONFIG"
 
-# Merge KSU/SUSFS fragment.
-if [ -f "$FRAGMENT" ]; then
-    echo "[build] merging fragment $FRAGMENT"
-    ./scripts/kconfig/merge_config.sh -m -O out out/.config "$FRAGMENT"
+# Merge every *.fragment in kernel/config/ on top of the base .config.
+# Files are applied in lexical order (00_*, ksu_*, extras_*, ...), so name
+# them accordingly if you need a specific override order.
+shopt -s nullglob
+FRAGMENTS=( "$FRAGMENT_DIR"/*.fragment )
+shopt -u nullglob
+if [ "${#FRAGMENTS[@]}" -gt 0 ]; then
+    echo "[build] merging ${#FRAGMENTS[@]} fragment(s):"
+    for f in "${FRAGMENTS[@]}"; do echo "          - $(basename "$f")"; done
+    ./scripts/kconfig/merge_config.sh -m -O out out/.config "${FRAGMENTS[@]}"
     make "${MAKE_ARGS[@]}" olddefconfig
+else
+    echo "[build] no fragments found in $FRAGMENT_DIR"
 fi
 
 # Build Image (and Image.gz / dtbs) — sufficient for AnyKernel3 packaging.

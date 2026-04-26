@@ -1,0 +1,39 @@
+# Extra kernel features for peridot.
+# Merged on top of `gki_defconfig vendor/peridot_GKI.config` together with
+# ksu_susfs.fragment by 03_build.sh. Independent of KernelSU — disable by
+# renaming or removing this file.
+
+# ---- 1. WireGuard (in-kernel VPN) ------------------------------------------
+# Built-in kernel WireGuard, mainline since 5.6, mature on 6.1.
+# Required crypto libs (CHACHA20POLY1305, CURVE25519, BLAKE2S) are pulled
+# in via `select` from the WIREGUARD Kconfig.
+CONFIG_WIREGUARD=y
+
+# ---- 2. BBR + FQ qdisc (TCP congestion control) ---------------------------
+# BBR v1 (mainline). v3 requires backporting ~50 patches from Google's
+# experimental tree and is left out for stability. FQ (Fair Queueing)
+# qdisc is required for BBR's pacing to actually take effect.
+CONFIG_TCP_CONG_BBR=y
+CONFIG_DEFAULT_BBR=y
+CONFIG_DEFAULT_TCP_CONG="bbr"
+CONFIG_NET_SCH_FQ=y
+
+# ---- 3. NTFS3 (in-kernel NTFS read/write) ---------------------------------
+# Paragon NTFS3 driver, mainline since 5.15. Replaces userspace ntfs-3g
+# (FUSE) for external NTFS storage.
+CONFIG_NTFS3_FS=y
+CONFIG_NTFS3_LZX_XPRESS=y
+CONFIG_NTFS3_FS_POSIX_ACL=y
+
+# ---- 4. exFAT improvements ------------------------------------------------
+# Force built-in (some configs ship =m which delays first mount), set the
+# default I/O charset to UTF-8, and pull in the codepages we want
+# automatically loaded so non-ASCII filenames (incl. Shift_JIS from
+# Windows-formatted SD cards) round-trip correctly.
+CONFIG_EXFAT_FS=y
+CONFIG_EXFAT_DEFAULT_IOCHARSET="utf8"
+CONFIG_NLS=y
+CONFIG_NLS_DEFAULT="utf8"
+CONFIG_NLS_UTF8=y
+CONFIG_NLS_CODEPAGE_437=y
+CONFIG_NLS_CODEPAGE_932=y
