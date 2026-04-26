@@ -1,45 +1,54 @@
-# KernelSU-Next (next-susfs-a14-6.1-dev branch, v1.1.1) defconfig fragment.
+# ReSukiSU defconfig fragment.
 # Merged on top of `gki_defconfig vendor/peridot_GKI.config` by 03_build.sh.
 #
-# Symbols here are validated against KernelSU-Next branch
-# `next-susfs-a14-6.1-dev` (kernel/Kconfig). This branch pairs with
-# susfs4ksu v1.5.x — see 00_env.sh for the SUSFS_REF pin.
+# Symbols here are validated against ReSukiSU's kernel/Kconfig (main
+# branch). ReSukiSU bundles SUSFS internally — no susfs4ksu patches
+# needed. Manager APK ships the userspace SUSFS binaries.
 #
 # After flashing the kernel, install on device:
-#   1. KernelSU-Next v1.1.1 manager APK
-#      https://github.com/KernelSU-Next/KernelSU-Next/releases/tag/v1.1.1
-#   2. susfs4ksu-module (userspace SUSFS UI/helpers, requires SUSFS 1.5.2+)
-#      https://github.com/sidex15/susfs4ksu-module
+#   ReSukiSU Manager APK from https://github.com/ReSukiSU/ReSukiSU
+#   (SUSFS UI is built in, no separate sidex15/BRENE module required).
 
-# --- KernelSU-Next core -----------------------------------------------------
+# --- ReSukiSU core ----------------------------------------------------------
 CONFIG_KSU=y
 CONFIG_KSU_DEBUG=n
-# Leave kprobes hooks ON (default). Disabling kprobes only works if the
-# kernel source has been patched with manual KSU hook calls in fs/exec.c
-# / fs/open.c / fs/stat.c — we do NOT apply those patches.
-# CONFIG_KSU_KPROBES_HOOK=y    (kept as default)
-CONFIG_KSU_ALLOWLIST_WORKAROUND=n
+CONFIG_KSU_DISABLE_MANAGER=n
+CONFIG_KSU_DISABLE_POLICY=n
+
+# Useful niceties on by default in ReSukiSU; explicit for clarity.
+CONFIG_KSU_TOOLKIT_SUPPORT=y
+CONFIG_KSU_FULL_NAME_FORMAT=y
+CONFIG_KSU_MULTI_MANAGER_SUPPORT=y
+
+# KPM (Kernel Patch Module) support — runtime-loadable kernel patches.
+# Useful for future SUSFS feature updates without rebuilding the kernel.
+CONFIG_KPM=y
+
+# --- Hook strategy ----------------------------------------------------------
+# peridot's gki_defconfig has KPROBES + tracepoints, so the tracepoint
+# hook is preferred (lower overhead than kprobes, more reliable than
+# manual). ReSukiSU also offers AUTO_*_HOOK helpers that patch the
+# kernel source automatically when KSU_MANUAL_HOOK=y; we don't need
+# them with the tracepoint path.
+CONFIG_KSU_TRACEPOINT_HOOK=y
+CONFIG_KSU_MANUAL_HOOK=n
 
 # --- SUSFS root toggle ------------------------------------------------------
 CONFIG_KSU_SUSFS=y
 
-# --- SUSFS feature toggles (validated against v1.5.x Kconfig) ---------------
+# --- SUSFS feature toggles (validated against ReSukiSU Kconfig) -------------
 CONFIG_KSU_SUSFS_SUS_PATH=y
 CONFIG_KSU_SUSFS_SUS_MOUNT=y
-CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=y
-CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=y
 CONFIG_KSU_SUSFS_SUS_KSTAT=y
-CONFIG_KSU_SUSFS_TRY_UMOUNT=y
-CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=y
 CONFIG_KSU_SUSFS_SPOOF_UNAME=y
 CONFIG_KSU_SUSFS_ENABLE_LOG=y
 CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y
 CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y
 CONFIG_KSU_SUSFS_OPEN_REDIRECT=y
-CONFIG_KSU_SUSFS_SUS_SU=y
+CONFIG_KSU_SUSFS_SUS_MAP=y
 
 # --- Build identification ---------------------------------------------------
 # vermagic includes LOCALVERSION; vendor modules use CRC-based MODVERSIONS
 # (CONFIG_MODVERSIONS=y in vendor config) so this string change does not
 # break module loading on peridot.
-CONFIG_LOCALVERSION="-PeridotKSU"
+CONFIG_LOCALVERSION="-PeridotReSukiSU"

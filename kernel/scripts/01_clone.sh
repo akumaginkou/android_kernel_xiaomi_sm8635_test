@@ -17,24 +17,4 @@ clone_or_update() {
 clone_or_update "$KERNEL_REPO"    "$KERNEL_BRANCH"    "$KERNEL_DIR"
 clone_or_update "$ANYKERNEL_REPO" "$ANYKERNEL_BRANCH" "$ANYKERNEL_DIR"
 
-# susfs4ksu: KSU-Next's legacy-susfs branch references symbols from this
-# repo. Use a full clone (not shallow) when SUSFS_REF is set, so the
-# pinned commit is reachable.
-if [ -n "${SUSFS_REF:-}" ]; then
-    if [ -d "$SUSFS_DIR/.git" ]; then
-        echo "[clone] $SUSFS_DIR exists; fetching"
-        git -C "$SUSFS_DIR" fetch origin "$SUSFS_BRANCH"
-    else
-        echo "[clone] $SUSFS_REPO -> $SUSFS_DIR ($SUSFS_BRANCH, full)"
-        git clone --branch "$SUSFS_BRANCH" "$SUSFS_REPO" "$SUSFS_DIR"
-    fi
-    echo "[clone] pinning susfs to $SUSFS_REF"
-    git -C "$SUSFS_DIR" checkout -f "$SUSFS_REF"
-else
-    clone_or_update "$SUSFS_REPO" "$SUSFS_BRANCH" "$SUSFS_DIR"
-fi
-
-ACTUAL_VER="$(grep '^#define SUSFS_VERSION' "$SUSFS_DIR/kernel_patches/include/linux/susfs.h" 2>/dev/null | awk '{print $3}' | tr -d '"' || echo unknown)"
-echo "[clone] susfs version: $ACTUAL_VER"
-
-echo "[clone] done."
+echo "[clone] done. (susfs4ksu no longer cloned: ReSukiSU bundles SUSFS internally)"

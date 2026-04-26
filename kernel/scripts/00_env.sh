@@ -23,34 +23,17 @@ export ANYKERNEL_REPO="${ANYKERNEL_REPO:-https://github.com/osm0sis/AnyKernel3.g
 export ANYKERNEL_BRANCH="${ANYKERNEL_BRANCH:-master}"
 export ANYKERNEL_DIR="${ANYKERNEL_DIR:-$WORKDIR/AnyKernel3}"
 
-# KernelSU-Next.
-# We use the `next-susfs-a14-6.1-dev` branch (v1.1.1, KSU 12879) which
-# pairs with susfs4ksu v1.5.x. This pairing is the proven working
-# combination — the newer `legacy-susfs` branch still has unfinished
-# SUSFS integration as of 2026-04 (calls undefined ksu_handle_vfs_fstat
-# etc. that no public susfs variant provides).
+# ReSukiSU (KernelSU-based root + SUSFS, all integrated).
+# Replaces the previous KSU-Next + susfs4ksu split. ReSukiSU bundles
+# the SUSFS implementation directly in drivers/kernelsu/, so no
+# external susfs4ksu kernel patches or fs/susfs.c overlay are needed.
+# The Manager APK ships userspace SUSFS binaries (ksu_susfs_2.0.0 /
+# ksu_susfs_2.1.0) so no separate sidex15/BRENE module is required.
 #
-# Manager APK to install on device: KSU-Next v1.1.1 release.
-# Userspace SUSFS UI: sidex15/susfs4ksu-module (requires SUSFS 1.5.2+
-# in kernel, our v1.5.12 satisfies this).
-#
-# Other valid setup.sh args (per official install guide):
-#   stable  = v3.2.0 (no SUSFS at all)
-#   legacy  = older non-GKI kernels
-export KSU_NEXT_INSTALLER="${KSU_NEXT_INSTALLER:-https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh}"
-export KSU_NEXT_TAG="${KSU_NEXT_TAG:-next-susfs-a14-6.1-dev}"
-
-# SUSFS (simonpunk).
-#   - branch matches kernel KMI: peridot lineage-23.2 = kernel 6.1 ->
-#     `gki-android14-6.1` (Google GKI naming caps at android14 for 6.1).
-#   - SUSFS_REF pins commit f16560c = "Bump version to v1.5.12; Synced
-#     with KernelSU main branch ...". This is the last v1.5.x commit
-#     before the v2.0 API rebase. v1.5.12 also satisfies sidex15/
-#     susfs4ksu-module's "SUSFS 1.5.2 or later" requirement.
-export SUSFS_REPO="${SUSFS_REPO:-https://gitlab.com/simonpunk/susfs4ksu.git}"
-export SUSFS_BRANCH="${SUSFS_BRANCH:-gki-android14-6.1}"
-export SUSFS_REF="${SUSFS_REF:-f16560ce8263fbfa9b2f259e9531f72d6fda4e3f}"
-export SUSFS_DIR="${SUSFS_DIR:-$WORKDIR/susfs4ksu}"
+# ReSukiSU has no tagged releases yet (rolling); setup.sh's no-arg
+# "checkout latest tag" path would fail, so we pass `main` explicitly.
+export RESUKISU_INSTALLER="${RESUKISU_INSTALLER:-https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh}"
+export RESUKISU_TAG="${RESUKISU_TAG:-main}"
 
 # Build target
 export ARCH=arm64
@@ -74,12 +57,12 @@ export CCACHE_DIR="${CCACHE_DIR:-$HOME/.ccache}"
 export CCACHE_MAXSIZE="${CCACHE_MAXSIZE:-5G}"
 
 # Output naming
-export KERNEL_NAME="${KERNEL_NAME:-PeridotKSU}"
+export KERNEL_NAME="${KERNEL_NAME:-PeridotReSukiSU}"
 export ZIP_NAME="${ZIP_NAME:-${KERNEL_NAME}-$(date -u +%Y%m%d-%H%M)-AnyKernel3.zip}"
 
 mkdir -p "$WORKDIR" "$OUTDIR" "$CCACHE_DIR"
 
-echo "[env] PROJECT_ROOT = $PROJECT_ROOT"
-echo "[env] WORKDIR      = $WORKDIR"
-echo "[env] KERNEL_REPO  = $KERNEL_REPO ($KERNEL_BRANCH)"
-echo "[env] KSU_NEXT_TAG = $KSU_NEXT_TAG"
+echo "[env] PROJECT_ROOT  = $PROJECT_ROOT"
+echo "[env] WORKDIR       = $WORKDIR"
+echo "[env] KERNEL_REPO   = $KERNEL_REPO ($KERNEL_BRANCH)"
+echo "[env] RESUKISU_TAG  = $RESUKISU_TAG"

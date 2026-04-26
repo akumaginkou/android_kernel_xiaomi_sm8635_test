@@ -1,4 +1,4 @@
-name: Build peridot kernel (KSU-Next + SUSFS)
+name: Build peridot kernel (ReSukiSU + SUSFS)
 
 on:
   workflow_dispatch:
@@ -7,18 +7,10 @@ on:
         description: "peridot-dev/android_kernel_xiaomi_sm8635 branch"
         type: string
         default: "lineage-23.2"
-      ksu_next_tag:
-        description: "KernelSU-Next branch/tag (paired with susfs_ref)"
+      resukisu_tag:
+        description: "ReSukiSU branch/tag (no tagged releases yet — use 'main')"
         type: string
-        default: "next-susfs-a14-6.1-dev"
-      susfs_branch:
-        description: "susfs4ksu branch (must match kernel KMI)"
-        type: string
-        default: "gki-android14-6.1"
-      susfs_ref:
-        description: "susfs4ksu commit/tag (default = v1.5.12, paired with KSU-Next v1.1.1)"
-        type: string
-        default: "f16560ce8263fbfa9b2f259e9531f72d6fda4e3f"
+        default: "main"
       release:
         description: "Attach zip to a GitHub Release"
         type: boolean
@@ -44,9 +36,7 @@ jobs:
     timeout-minutes: 90
     env:
       KERNEL_BRANCH: ${{ github.event.inputs.kernel_branch || 'lineage-23.2' }}
-      KSU_NEXT_TAG:  ${{ github.event.inputs.ksu_next_tag  || 'next-susfs-a14-6.1-dev' }}
-      SUSFS_BRANCH:  ${{ github.event.inputs.susfs_branch  || 'gki-android14-6.1' }}
-      SUSFS_REF:     ${{ github.event.inputs.susfs_ref     || 'f16560ce8263fbfa9b2f259e9531f72d6fda4e3f' }}
+      RESUKISU_TAG:  ${{ github.event.inputs.resukisu_tag  || 'main' }}
       WORKDIR:       ${{ github.workspace }}/work
       OUTDIR:        ${{ github.workspace }}/out
       CCACHE_DIR:    ${{ github.workspace }}/.ccache
@@ -84,10 +74,10 @@ jobs:
             ccache-peridot-${{ env.KERNEL_BRANCH }}-
             ccache-peridot-
 
-      - name: Clone kernel + AnyKernel3 + susfs4ksu
+      - name: Clone kernel + AnyKernel3
         run: bash kernel/scripts/01_clone.sh
 
-      - name: Install KernelSU-Next + apply SUSFS patches
+      - name: Install ReSukiSU (KSU + SUSFS bundled)
         run: bash kernel/scripts/02_patch.sh
 
       - name: Build kernel Image
@@ -103,7 +93,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PeridotKSU-AnyKernel3-${{ github.run_number }}
+          name: PeridotReSukiSU-AnyKernel3-${{ github.run_number }}
           path: out/*.zip
           if-no-files-found: error
           retention-days: 30
