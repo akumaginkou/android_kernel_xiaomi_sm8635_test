@@ -21,11 +21,15 @@ if [ -n "${CLANG_DIR:-}" ] && [ ! -x "$CLANG_DIR/bin/clang" ]; then
     if [ -n "${GITHUB_TOKEN:-}" ]; then
         AUTH_HDR=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
     fi
+    # ZyCromerZ alternates clang 15.x (LTS) and clang 23.x (git-tip) builds, so
+    # /releases/latest is non-deterministic — explicitly grab the newest clang
+    # 23 asset (closest available match to peridot's stock clang 21.0.0).
+    CLANG_MAJOR="${CLANG_MAJOR:-23}"
     ASSET_URL="$(curl -fsSL "${AUTH_HDR[@]}" \
-        "https://api.github.com/repos/${CLANG_REPO}/releases/latest" \
+        "https://api.github.com/repos/${CLANG_REPO}/releases?per_page=30" \
         | grep '"browser_download_url"' \
-        | grep -E '\.tar\.(gz|xz)"' \
-        | head -1 | cut -d '"' -f4)"
+        | grep -oE '"https://[^"]*Clang-'"${CLANG_MAJOR}"'\.[^"]*\.tar\.(gz|xz)"' \
+        | head -1 | tr -d '"')"
     if [ -z "$ASSET_URL" ]; then
         echo "[build] ERROR: could not resolve $CLANG_REPO latest release tarball" >&2
         exit 1
