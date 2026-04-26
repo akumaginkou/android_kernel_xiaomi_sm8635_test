@@ -1,42 +1,37 @@
-# ReSukiSU defconfig fragment.
+# ReSukiSU + susfs4ksu defconfig fragment.
 # Merged on top of `gki_defconfig vendor/peridot_GKI.config` by 03_build.sh.
 #
-# Symbols here are validated against ReSukiSU's kernel/Kconfig (main
-# branch). ReSukiSU bundles SUSFS internally — no susfs4ksu patches
-# needed. Manager APK ships the userspace SUSFS binaries.
+# ReSukiSU's hook-strategy is a Kconfig `choice` block with three options:
+#   KSU_TRACEPOINT_HOOK / KSU_MANUAL_HOOK / KSU_SUSFS
+# We pick KSU_SUSFS = "SUSFS Inline Hook" because we have the susfs4ksu
+# kernel patches applied (see 02_patch.sh). All seven ksu_handle_*
+# inline hooks live in the kernel source tree after that patch lands;
+# ReSukiSU's inline_hook_check.mk verifies their presence and fails the
+# build loudly if any is missing.
 #
 # After flashing the kernel, install on device:
 #   ReSukiSU Manager APK from https://github.com/ReSukiSU/ReSukiSU
-#   (SUSFS UI is built in, no separate sidex15/BRENE module required).
+#   (SUSFS UI is bundled in the manager — no separate sidex15/BRENE
+#    module is required).
 
 # --- ReSukiSU core ----------------------------------------------------------
 CONFIG_KSU=y
 CONFIG_KSU_DEBUG=n
 CONFIG_KSU_DISABLE_MANAGER=n
 CONFIG_KSU_DISABLE_POLICY=n
-
-# Useful niceties on by default in ReSukiSU; explicit for clarity.
 CONFIG_KSU_TOOLKIT_SUPPORT=y
 CONFIG_KSU_FULL_NAME_FORMAT=y
 CONFIG_KSU_MULTI_MANAGER_SUPPORT=y
 
-# KPM (Kernel Patch Module) support — runtime-loadable kernel patches.
-# Useful for future SUSFS feature updates without rebuilding the kernel.
+# KPM (Kernel Patch Module) — runtime-loadable kernel patches.
 CONFIG_KPM=y
 
-# --- Hook strategy ----------------------------------------------------------
-# peridot's gki_defconfig has KPROBES + tracepoints, so the tracepoint
-# hook is preferred (lower overhead than kprobes, more reliable than
-# manual). ReSukiSU also offers AUTO_*_HOOK helpers that patch the
-# kernel source automatically when KSU_MANUAL_HOOK=y; we don't need
-# them with the tracepoint path.
-CONFIG_KSU_TRACEPOINT_HOOK=y
-CONFIG_KSU_MANUAL_HOOK=n
-
-# --- SUSFS root toggle ------------------------------------------------------
+# --- Hook strategy: SUSFS Inline (one of the choice options) ---------------
+# Selecting KSU_SUSFS automatically deselects KSU_TRACEPOINT_HOOK and
+# KSU_MANUAL_HOOK because they're in the same `choice` block.
 CONFIG_KSU_SUSFS=y
 
-# --- SUSFS feature toggles (validated against ReSukiSU Kconfig) -------------
+# --- SUSFS feature toggles (all default y, explicit for clarity) -----------
 CONFIG_KSU_SUSFS_SUS_PATH=y
 CONFIG_KSU_SUSFS_SUS_MOUNT=y
 CONFIG_KSU_SUSFS_SUS_KSTAT=y
@@ -48,7 +43,4 @@ CONFIG_KSU_SUSFS_OPEN_REDIRECT=y
 CONFIG_KSU_SUSFS_SUS_MAP=y
 
 # --- Build identification ---------------------------------------------------
-# vermagic includes LOCALVERSION; vendor modules use CRC-based MODVERSIONS
-# (CONFIG_MODVERSIONS=y in vendor config) so this string change does not
-# break module loading on peridot.
 CONFIG_LOCALVERSION="-PeridotReSukiSU"

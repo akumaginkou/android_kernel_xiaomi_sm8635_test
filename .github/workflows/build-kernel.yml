@@ -11,6 +11,14 @@ on:
         description: "ReSukiSU branch/tag (no tagged releases yet — use 'main')"
         type: string
         default: "main"
+      susfs_branch:
+        description: "susfs4ksu branch (must match kernel KMI)"
+        type: string
+        default: "gki-android14-6.1"
+      susfs_ref:
+        description: "susfs4ksu commit/tag (empty = HEAD = latest v2.x)"
+        type: string
+        default: ""
       release:
         description: "Attach zip to a GitHub Release"
         type: boolean
@@ -37,6 +45,8 @@ jobs:
     env:
       KERNEL_BRANCH: ${{ github.event.inputs.kernel_branch || 'lineage-23.2' }}
       RESUKISU_TAG:  ${{ github.event.inputs.resukisu_tag  || 'main' }}
+      SUSFS_BRANCH:  ${{ github.event.inputs.susfs_branch  || 'gki-android14-6.1' }}
+      SUSFS_REF:     ${{ github.event.inputs.susfs_ref     || '' }}
       WORKDIR:       ${{ github.workspace }}/work
       OUTDIR:        ${{ github.workspace }}/out
       CCACHE_DIR:    ${{ github.workspace }}/.ccache
@@ -74,10 +84,10 @@ jobs:
             ccache-peridot-${{ env.KERNEL_BRANCH }}-
             ccache-peridot-
 
-      - name: Clone kernel + AnyKernel3
+      - name: Clone kernel + AnyKernel3 + susfs4ksu
         run: bash kernel/scripts/01_clone.sh
 
-      - name: Install ReSukiSU (KSU + SUSFS bundled)
+      - name: Install ReSukiSU + apply susfs4ksu kernel patches
         run: bash kernel/scripts/02_patch.sh
 
       - name: Build kernel Image
