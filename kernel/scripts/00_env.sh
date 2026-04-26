@@ -27,10 +27,13 @@ export ANYKERNEL_DIR="${ANYKERNEL_DIR:-$WORKDIR/AnyKernel3}"
 export KSU_NEXT_INSTALLER="${KSU_NEXT_INSTALLER:-https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh}"
 export KSU_NEXT_TAG="${KSU_NEXT_TAG:-next-susfs}"
 
-# SUSFS (simonpunk). Branch must match kernel KMI.
-# peridot lineage-23.2 = android15-6.1.
+# SUSFS (simonpunk). Branch must match the kernel version, NOT the Android
+# version. Google GKI naming convention is `gki-android<N>-<kver>` and the
+# 6.1 kernel line tops out at `android14-6.1` upstream — peridot's
+# lineage-23.2 is kernel 6.1.x (shipped by Xiaomi), so this is the match
+# even when the ROM on top is Android 16.
 export SUSFS_REPO="${SUSFS_REPO:-https://gitlab.com/simonpunk/susfs4ksu.git}"
-export SUSFS_BRANCH="${SUSFS_BRANCH:-gki-android15-6.1}"
+export SUSFS_BRANCH="${SUSFS_BRANCH:-gki-android14-6.1}"
 export SUSFS_DIR="${SUSFS_DIR:-$WORKDIR/susfs4ksu}"
 
 # Build target

@@ -13,7 +13,7 @@ LineageOS 23.x, ...).
 |---|---|---|
 | Kernel | [peridot-dev/android_kernel_xiaomi_sm8635](https://github.com/peridot-dev/android_kernel_xiaomi_sm8635) | `lineage-23.2` (kernel 6.1, android15-6.1 GKI) |
 | Root  | [KernelSU-Next/KernelSU-Next](https://github.com/KernelSU-Next/KernelSU-Next) | `next-susfs` |
-| Hide  | [simonpunk/susfs4ksu](https://gitlab.com/simonpunk/susfs4ksu) | `gki-android15-6.1` |
+| Hide  | [simonpunk/susfs4ksu](https://gitlab.com/simonpunk/susfs4ksu) | `gki-android14-6.1` |
 | Pack  | [osm0sis/AnyKernel3](https://github.com/osm0sis/AnyKernel3) | `master` |
 
 ## Repository layout

@@ -16,7 +16,7 @@ fi
 
 # ---- 2. Apply SUSFS kernel-side patch --------------------------------------
 SUSFS_PATCHES="$SUSFS_DIR/kernel_patches"
-KERNEL_PATCH="$SUSFS_PATCHES/50_add_susfs_in_gki-android15-6.1.patch"
+KERNEL_PATCH="$SUSFS_PATCHES/50_add_susfs_in_gki-android14-6.1.patch"
 
 if [ ! -f "$KERNEL_PATCH" ]; then
     echo "[patch] ERROR: $KERNEL_PATCH not found." >&2

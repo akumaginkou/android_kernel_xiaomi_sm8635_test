@@ -14,7 +14,7 @@ on:
       susfs_branch:
         description: "susfs4ksu branch (must match kernel KMI)"
         type: string
-        default: "gki-android15-6.1"
+        default: "gki-android14-6.1"
       release:
         description: "Attach zip to a GitHub Release"
         type: boolean
@@ -41,7 +41,7 @@ jobs:
     env:
       KERNEL_BRANCH: ${{ github.event.inputs.kernel_branch || 'lineage-23.2' }}
       KSU_NEXT_TAG:  ${{ github.event.inputs.ksu_next_tag  || 'next-susfs' }}
-      SUSFS_BRANCH:  ${{ github.event.inputs.susfs_branch  || 'gki-android15-6.1' }}
+      SUSFS_BRANCH:  ${{ github.event.inputs.susfs_branch  || 'gki-android14-6.1' }}
       WORKDIR:       ${{ github.workspace }}/work
       OUTDIR:        ${{ github.workspace }}/out
       CCACHE_DIR:    ${{ github.workspace }}/.ccache
