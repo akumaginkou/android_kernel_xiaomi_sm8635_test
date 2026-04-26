@@ -11,10 +11,16 @@ LineageOS 23.x, ...).
 
 | Layer | Source | Branch / tag |
 |---|---|---|
-| Kernel | [peridot-dev/android_kernel_xiaomi_sm8635](https://github.com/peridot-dev/android_kernel_xiaomi_sm8635) | `lineage-23.2` (kernel 6.1, android15-6.1 GKI) |
-| Root  | [KernelSU-Next/KernelSU-Next](https://github.com/KernelSU-Next/KernelSU-Next) | `next-susfs` |
-| Hide  | [simonpunk/susfs4ksu](https://gitlab.com/simonpunk/susfs4ksu) | `gki-android14-6.1` |
+| Kernel | [peridot-dev/android_kernel_xiaomi_sm8635](https://github.com/peridot-dev/android_kernel_xiaomi_sm8635) | `lineage-23.2` (kernel 6.1) |
+| Root + Hide | [KernelSU-Next/KernelSU-Next](https://github.com/KernelSU-Next/KernelSU-Next) | `legacy-susfs` (SUSFS built into KernelSU-Next, no external patches) |
 | Pack  | [osm0sis/AnyKernel3](https://github.com/osm0sis/AnyKernel3) | `master` |
+
+> **Why `legacy-susfs`?** Per the [official KernelSU-Next install guide](https://kernelsu-next.github.io/webpage/pages/installation.html),
+> setup.sh accepts `stable`/`legacy`/`dev`/`<tag>`. The `stable` (v3.2.0)
+> release does not include SUSFS. The `legacy-susfs` branch is the
+> actively-maintained variant that integrates SUSFS directly into KernelSU-Next
+> (commit `4cc162e Add SUSFS support`, 2026-04-23). No `susfs4ksu` patches
+> are needed — enabling `CONFIG_KSU_SUSFS=y` is enough.
 
 ## Repository layout
 
@@ -26,8 +32,8 @@ LineageOS 23.x, ...).
 ├── kernel/
 │   ├── scripts/
 │   │   ├── 00_env.sh                    Shared env vars (override via env)
-│   │   ├── 01_clone.sh                  Clone kernel + KSU-Next + SUSFS + AK3
-│   │   ├── 02_patch.sh                  Apply KSU-Next + SUSFS patches
+│   │   ├── 01_clone.sh                  Clone kernel + AnyKernel3
+│   │   ├── 02_patch.sh                  Install KernelSU-Next (legacy-susfs)
 │   │   ├── 03_build.sh                  defconfig + clang build
 │   │   └── 04_pack.sh                   Package Image into AnyKernel3 zip
 │   ├── config/

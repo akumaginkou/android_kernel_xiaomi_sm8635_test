@@ -1,44 +1,42 @@
-# KernelSU-Next + SUSFS enablement fragment.
-# Merged on top of `gki_defconfig vendor/peridot_GKI.config` by 03_build.sh
-# via scripts/kconfig/merge_config.sh.
+# KernelSU-Next (legacy-susfs branch) defconfig fragment.
+# Merged on top of `gki_defconfig vendor/peridot_GKI.config` by 03_build.sh.
 #
 # All symbols here are validated against KernelSU-Next branch
-# `next-susfs-a14-6.1-dev` (kernel/Kconfig). Unknown symbols are silently
-# dropped by merge_config.sh, so any typo here disables the feature
-# without any error — keep this list tight and verified.
+# `legacy-susfs` (kernel/Kconfig at commit 4cc162e+). SUSFS is integrated
+# directly into KernelSU-Next on this branch — no external susfs4ksu
+# patches are needed. Most symbols default to y; we set them explicitly
+# so changes here are obvious in `make olddefconfig` diffs.
 
 # --- KernelSU-Next core -----------------------------------------------------
 CONFIG_KSU=y
 CONFIG_KSU_DEBUG=n
-# IMPORTANT: KSU_KPROBES_HOOK defaults to y. Disable it ONLY if you have
-# patched manual hooks into fs/exec.c, fs/open.c, fs/stat.c, etc. We do
-# NOT apply those manual-hook patches, so we must leave kprobes enabled
-# or KSU's exec/open hooks won't fire at runtime (root would not work).
-# CONFIG_KSU_KPROBES_HOOK=y   # leave as default
-
-# Useful workaround for some devices (harmless if not needed).
+CONFIG_KSU_DISABLE_MANAGER=n
+CONFIG_KSU_DISABLE_POLICY=n
 CONFIG_KSU_ALLOWLIST_WORKAROUND=n
+
+# Hook strategy. peridot's gki_defconfig has KPROBES, KRETPROBES and
+# HAVE_SYSCALL_TRACEPOINTS, so the auto-selected default (KPROBES_HOOK=y,
+# MANUAL_HOOK=n) is right. Setting them explicitly to make intent clear.
+CONFIG_KSU_MANUAL_HOOK=n
+CONFIG_KSU_KPROBES_HOOK=y
 
 # --- SUSFS root toggle ------------------------------------------------------
 CONFIG_KSU_SUSFS=y
 
-# --- SUSFS feature toggles (all default y on this branch; explicit for clarity)
+# --- SUSFS feature toggles (all default y on this branch) -------------------
 CONFIG_KSU_SUSFS_SUS_PATH=y
 CONFIG_KSU_SUSFS_SUS_MOUNT=y
-CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=y
-CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=y
 CONFIG_KSU_SUSFS_SUS_KSTAT=y
 CONFIG_KSU_SUSFS_TRY_UMOUNT=y
-CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=y
 CONFIG_KSU_SUSFS_SPOOF_UNAME=y
 CONFIG_KSU_SUSFS_ENABLE_LOG=y
 CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y
 CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y
 CONFIG_KSU_SUSFS_OPEN_REDIRECT=y
-CONFIG_KSU_SUSFS_SUS_SU=y
+CONFIG_KSU_SUSFS_SUS_MAP=y
 
 # --- Build identification ---------------------------------------------------
 # vermagic includes LOCALVERSION; vendor modules use CRC-based MODVERSIONS
-# matching (CONFIG_MODVERSIONS=y in vendor config) so this string change
-# does not break module loading on peridot.
+# (CONFIG_MODVERSIONS=y in vendor config) so this string change does not
+# break module loading on peridot.
 CONFIG_LOCALVERSION="-PeridotKSU"
