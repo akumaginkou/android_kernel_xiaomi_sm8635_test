@@ -37,18 +37,15 @@ no_magisk_check=1
 . tools/ak3-core.sh
 
 ### Boot install
-# peridot is an init_boot device: ramdisk lives in init_boot.img, boot.img
-# carries only the kernel. We dump_boot (no ramdisk processing) +
-# write_boot (no ramdisk repack) to keep magiskboot from trying to
-# touch a ramdisk that isn't there.
+# Standard peridot pattern (GuidixX/Lu5ck/farrukh2002 etc.): use
+# split_boot + flash_boot regardless of init_boot, because boot.img
+# on this device still has a (minimal) ramdisk that magiskboot needs
+# to round-trip through. Earlier attempts to use dump_boot/write_boot
+# died with "No ramdisk found to unpack".
 if [ -L "/dev/block/bootdevice/by-name/init_boot_a" -o -L "/dev/block/by-name/init_boot_a" -o \
      -L "/dev/block/bootdevice/by-name/init_boot"   -o -L "/dev/block/by-name/init_boot"   ]; then
-    ui_print " " "init_boot detected — flashing kernel only into boot partition"
-    dump_boot
-    write_boot
-else
-    ui_print " " "no init_boot — flashing boot partition with full unpack/repack"
-    split_boot
-    flash_boot
+    ui_print " " "init_boot detected — kernel goes into boot partition only"
 fi
+split_boot
+flash_boot
 ## end boot install

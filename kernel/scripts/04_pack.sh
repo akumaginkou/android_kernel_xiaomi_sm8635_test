@@ -52,26 +52,35 @@ fi
 mkdir -p "$ANYKERNEL_DIR/bin"
 : > "$ANYKERNEL_DIR/bin/.placeholder"
 
-# Replace AnyKernel3's arm32 busybox with Magisk's arm64 static busybox.
-# AnyKernel3 ships an arm32 statically-linked busybox built by NDK r15c
-# (2017). On some recoveries / kernels without working CONFIG_COMPAT, it
-# can't execute and AK3 aborts with "Busybox setup failed". Magisk's
-# `lib/arm64-v8a/libbusybox.so` (despite the .so name) is a modern arm64
-# static ELF executable — drop it in as tools/busybox.
-BB="$ANYKERNEL_DIR/tools/busybox"
-echo "[pack] downloading Magisk APK to extract arm64 busybox"
+# AnyKernel3 ships arm32 statically-linked tools (NDK r15c, 2017). TWRP
+# on peridot rejects 32-bit binaries with errors like
+#   "/tmp/anykernel/tools/busybox: not executable: 32-bit ELF file"
+#   "magiskboot: line 1: syntax error"  (sh tries to interpret the ELF)
+# Replace BOTH busybox and magiskboot with Magisk's arm64 versions
+# (extracted from the latest Magisk APK; lib/arm64-v8a/lib*.so are
+# actually statically-linked arm64 ELF executables — Magisk masquerades
+# them as .so so they can be packed inside an APK).
+echo "[pack] downloading Magisk APK to extract arm64 binaries"
 TMP_APK="$(mktemp -t magisk.apk.XXXXXX)"
 curl -fsSL -o "$TMP_APK" "$MAGISK_APK_URL"
-unzip -p "$TMP_APK" lib/arm64-v8a/libbusybox.so > "$BB"
+for pair in busybox:libbusybox.so magiskboot:libmagiskboot.so magiskpolicy:libmagiskpolicy.so; do
+    name="${pair%%:*}"
+    so="${pair##*:}"
+    dst="$ANYKERNEL_DIR/tools/$name"
+    if unzip -p "$TMP_APK" "lib/arm64-v8a/$so" > "$dst" 2>/dev/null && [ -s "$dst" ]; then
+        chmod 0755 "$dst"
+        echo "[pack]   replaced tools/$name with arm64: $(file "$dst" | sed 's|^.*: ||')"
+    else
+        echo "[pack] WARNING: failed to extract lib/arm64-v8a/$so" >&2
+    fi
+done
 rm -f "$TMP_APK"
-chmod 0755 "$BB"
 
+BB="$ANYKERNEL_DIR/tools/busybox"
 if [ ! -s "$BB" ] || ! head -c 4 "$BB" | grep -q ELF; then
     echo "[pack] ERROR: $BB missing or not an ELF binary after Magisk extraction." >&2
-    ls -l "$ANYKERNEL_DIR/tools" >&2 || true
     exit 1
 fi
-echo "[pack] busybox: $(file "$BB" | sed 's|^.*: ||')"
 
 # Zip it.
 mkdir -p "$OUTDIR"
