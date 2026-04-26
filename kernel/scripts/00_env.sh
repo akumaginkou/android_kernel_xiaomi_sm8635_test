@@ -25,17 +25,30 @@ export ANYKERNEL_DIR="${ANYKERNEL_DIR:-$WORKDIR/AnyKernel3}"
 
 # KernelSU-Next.
 # Per the official install guide (https://kernelsu-next.github.io/webpage/),
-# the setup.sh accepts a branch/tag as its argument. For SUSFS-aware builds
-# we use the `legacy-susfs` branch which has SUSFS integrated directly into
-# KernelSU-Next (`Add SUSFS support`, commit 4cc162e on 2026-04-23) — no
-# separate susfs4ksu patches required, no fs/ source overlay.
+# setup.sh accepts a branch/tag. For SUSFS-aware builds we use the
+# `legacy-susfs` branch — but note: this branch only contains the KSU
+# *side* of the SUSFS integration. The kernel-side implementation
+# (linux/susfs.h, fs/susfs.c, hook patches) still has to come from
+# simonpunk/susfs4ksu. The build will fail with "linux/susfs.h: file not
+# found" if susfs4ksu is not applied.
 #
-# Other valid choices:
-#   stable           = v3.2.0 (no SUSFS)
+# Other valid setup.sh args:
+#   stable           = v3.2.0 (no SUSFS at all)
 #   legacy           = older non-GKI kernels (no SUSFS)
 #   v3.1.0-legacy-susfs = pinned tag if you want a stable SUSFS variant
 export KSU_NEXT_INSTALLER="${KSU_NEXT_INSTALLER:-https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh}"
 export KSU_NEXT_TAG="${KSU_NEXT_TAG:-legacy-susfs}"
+
+# SUSFS (simonpunk).
+#   - branch must match kernel KMI: peridot lineage-23.2 = kernel 6.1 ->
+#     `gki-android14-6.1` (Google GKI naming caps at android14 for 6.1).
+#   - SUSFS_REF pins a specific commit. KSU-Next legacy-susfs (v3.x)
+#     references the newer susfs v2.x API (sus_map etc.), so we follow HEAD
+#     of the branch. Pin to a specific commit if the API drifts again.
+export SUSFS_REPO="${SUSFS_REPO:-https://gitlab.com/simonpunk/susfs4ksu.git}"
+export SUSFS_BRANCH="${SUSFS_BRANCH:-gki-android14-6.1}"
+export SUSFS_REF="${SUSFS_REF:-}"
+export SUSFS_DIR="${SUSFS_DIR:-$WORKDIR/susfs4ksu}"
 
 # Build target
 export ARCH=arm64
