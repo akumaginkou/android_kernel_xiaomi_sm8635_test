@@ -7,30 +7,37 @@ FRAGMENT_DIR="$PROJECT_ROOT/kernel/config"
 
 cd "$KERNEL_DIR"
 
-# ---- Toolchain: download AOSP clang prebuilt if not already present ----
-# peridot's stock kernel was built with AOSP clang 21 (banner says
-# r563880c); the system Ubuntu clang-18 produces a kernel that fails
-# to boot on real hardware. Pull AOSP clang into $CLANG_DIR.
-if [ -n "${CLANG_DIR:-}" ] && [ ! -x "$CLANG_DIR/bin/clang" ] && [ -n "${AOSP_CLANG_VERSION:-}" ]; then
-    echo "[build] AOSP clang $AOSP_CLANG_VERSION not cached, downloading..."
+# ---- Toolchain: pull AOSP-equivalent clang prebuilt if not already present ----
+# peridot's stock kernel was built with AOSP clang 21.0.0; Ubuntu's
+# system clang-18 produces a kernel that fails to boot on real hardware
+# (verified with PURE rebuild). ZyCromerZ/Clang publishes AOSP-derived
+# clang 21.x tarballs on GitHub releases — closest reproducible match.
+if [ -n "${CLANG_DIR:-}" ] && [ ! -x "$CLANG_DIR/bin/clang" ]; then
+    echo "[build] AOSP-equivalent clang not cached, fetching latest from $CLANG_REPO ..."
     mkdir -p "$CLANG_DIR"
-    # AOSP googlesource +archive endpoint serves any subtree as a tarball.
-    URL="https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-${AOSP_CLANG_VERSION}.tar.gz"
-    if ! curl -fsSL "$URL" | tar xz -C "$CLANG_DIR" 2>/dev/null; then
-        # Fallback: shallow git clone via sparse-checkout (for when the +archive
-        # endpoint rate-limits or returns HTML on misses)
-        echo "[build] +archive download failed, falling back to sparse git clone"
-        SPARSE_DIR="$WORKDIR/aosp-clang-src"
-        rm -rf "$SPARSE_DIR"
-        git clone --depth=1 --filter=blob:none --no-checkout \
-            https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 \
-            "$SPARSE_DIR"
-        git -C "$SPARSE_DIR" sparse-checkout init --no-cone
-        git -C "$SPARSE_DIR" sparse-checkout set "clang-${AOSP_CLANG_VERSION}/*"
-        git -C "$SPARSE_DIR" checkout
-        rm -rf "$CLANG_DIR"
-        mv "$SPARSE_DIR/clang-${AOSP_CLANG_VERSION}" "$CLANG_DIR"
+    # Auth header lifts api.github.com 60 req/hr anonymous limit (CI runners
+    # share IPs; rate-limit hits flake unauthenticated builds).
+    AUTH_HDR=()
+    if [ -n "${GITHUB_TOKEN:-}" ]; then
+        AUTH_HDR=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
     fi
+    ASSET_URL="$(curl -fsSL "${AUTH_HDR[@]}" \
+        "https://api.github.com/repos/${CLANG_REPO}/releases/latest" \
+        | grep '"browser_download_url"' \
+        | grep -E '\.tar\.(gz|xz)"' \
+        | head -1 | cut -d '"' -f4)"
+    if [ -z "$ASSET_URL" ]; then
+        echo "[build] ERROR: could not resolve $CLANG_REPO latest release tarball" >&2
+        exit 1
+    fi
+    echo "[build] downloading $ASSET_URL"
+    TMP_TAR="$(mktemp -t clang.tar.XXXXXX)"
+    curl -fsSL -o "$TMP_TAR" "$ASSET_URL"
+    case "$ASSET_URL" in
+        *.tar.gz) tar xzf "$TMP_TAR" -C "$CLANG_DIR" ;;
+        *.tar.xz) tar xJf "$TMP_TAR" -C "$CLANG_DIR" ;;
+    esac
+    rm -f "$TMP_TAR"
     chmod -R +x "$CLANG_DIR/bin" 2>/dev/null || true
 fi
 

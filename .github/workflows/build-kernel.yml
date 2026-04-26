@@ -127,6 +127,10 @@ jobs:
           echo "KERNEL_NAME=PeridotMinimal" >> $GITHUB_ENV
 
       - name: Build kernel Image
+        env:
+          # 03_build.sh fetches ZyCromerZ Clang via api.github.com/.../releases/latest;
+          # auth lifts the 60-req/hr anonymous rate limit on shared CI IPs.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash kernel/scripts/03_build.sh
 
       - name: Pack AnyKernel3 zip

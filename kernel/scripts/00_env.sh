@@ -60,10 +60,14 @@ export VENDOR_DEFCONFIG="${VENDOR_DEFCONFIG:-vendor/peridot_GKI.config}"
 # Building with Ubuntu 24.04 system clang-18 produces an Image that
 # boot-loops on real hardware (verified with the PURE / no-KSU rebuild
 # also failing — the regression is in our toolchain, not in KSU/SUSFS).
-# Use an AOSP clang prebuilt close to stock. r530567b is a known-good
-# version widely used by the kernel community for android14-6.1 builds.
-export AOSP_CLANG_VERSION="${AOSP_CLANG_VERSION:-r530567b}"
-export CLANG_DIR="${CLANG_DIR:-$WORKDIR/aosp-clang/clang-$AOSP_CLANG_VERSION}"
+#
+# ZyCromerZ/Clang publishes AOSP-derived clang 21.x prebuilt tarballs
+# on GitHub releases — the closest reproducible match to peridot's
+# stock toolchain we can pull in CI without building clang from source.
+# (Tried AOSP googlesource +archive directly first — endpoint returns
+# 400 / sparse-checkout layout doesn't include the version we want.)
+export CLANG_REPO="${CLANG_REPO:-ZyCromerZ/Clang}"
+export CLANG_DIR="${CLANG_DIR:-$WORKDIR/zycromerz-clang}"
 export CC="${CC:-clang}"
 export LLVM=1
 export LLVM_IAS=1
