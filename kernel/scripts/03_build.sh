@@ -7,43 +7,21 @@ FRAGMENT_DIR="$PROJECT_ROOT/kernel/config"
 
 cd "$KERNEL_DIR"
 
-# ---- Toolchain: pull AOSP-equivalent clang prebuilt if not already present ----
-# peridot's stock kernel was built with AOSP clang 21.0.0; Ubuntu's
-# system clang-18 produces a kernel that fails to boot on real hardware
-# (verified with PURE rebuild). ZyCromerZ/Clang publishes AOSP-derived
-# clang 21.x tarballs on GitHub releases — closest reproducible match.
+# ---- Toolchain: pull kernel.org Linux Foundation LLVM ----
+# peridot's stock kernel uses clang 21.0.0 r563880c. We use the matching
+# Linux Foundation upstream-kernel clang 21.1.0 tarball hosted on
+# kernel.org — same build flavor (cross-targeted), pinned, single
+# tarball (no GitHub API rate limits).
 if [ -n "${CLANG_DIR:-}" ] && [ ! -x "$CLANG_DIR/bin/clang" ]; then
-    echo "[build] AOSP-equivalent clang not cached, fetching latest from $CLANG_REPO ..."
+    echo "[build] LLVM ${CLANG_VERSION} not cached, downloading from kernel.org ..."
     mkdir -p "$CLANG_DIR"
-    # Auth header lifts api.github.com 60 req/hr anonymous limit (CI runners
-    # share IPs; rate-limit hits flake unauthenticated builds).
-    AUTH_HDR=()
-    if [ -n "${GITHUB_TOKEN:-}" ]; then
-        AUTH_HDR=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
-    fi
-    # ZyCromerZ alternates clang 15.x (LTS) and clang 23.x (git-tip) builds.
-    # peridot's vendor_dlkm modules require CFI_CLANG=y at the ABI level
-    # (CFI changes indirect-call signatures); CFI_CLANG depends on
-    # cc-option=-fsanitize=kcfi which needs clang >= 17.
-    # clang 15 was producing CFI=n kernels that vendor modules then refused
-    # to bind to. Use clang 23 git-tip (closest to stock's clang 21).
-    CLANG_MAJOR="${CLANG_MAJOR:-23}"
-    ASSET_URL="$(curl -fsSL "${AUTH_HDR[@]}" \
-        "https://api.github.com/repos/${CLANG_REPO}/releases?per_page=30" \
-        | grep '"browser_download_url"' \
-        | grep -oE '"https://[^"]*Clang-'"${CLANG_MAJOR}"'\.[^"]*\.tar\.(gz|xz)"' \
-        | head -1 | tr -d '"')"
-    if [ -z "$ASSET_URL" ]; then
-        echo "[build] ERROR: could not resolve $CLANG_REPO latest release tarball" >&2
-        exit 1
-    fi
-    echo "[build] downloading $ASSET_URL"
-    TMP_TAR="$(mktemp -t clang.tar.XXXXXX)"
-    curl -fsSL -o "$TMP_TAR" "$ASSET_URL"
-    case "$ASSET_URL" in
-        *.tar.gz) tar xzf "$TMP_TAR" -C "$CLANG_DIR" ;;
-        *.tar.xz) tar xJf "$TMP_TAR" -C "$CLANG_DIR" ;;
-    esac
+    TMP_TAR="$(mktemp -t llvm.tar.XXXXXX)"
+    echo "[build] curl -fsSL $CLANG_TARBALL_URL"
+    curl -fsSL -o "$TMP_TAR" "$CLANG_TARBALL_URL"
+    # kernel.org tarballs unpack as a single top-level dir like
+    # llvm-21.1.0-x86_64/. Strip that so $CLANG_DIR/bin/clang ends up at
+    # the expected path.
+    tar xJf "$TMP_TAR" -C "$CLANG_DIR" --strip-components=1
     rm -f "$TMP_TAR"
     chmod -R +x "$CLANG_DIR/bin" 2>/dev/null || true
 fi

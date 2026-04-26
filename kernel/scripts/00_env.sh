@@ -68,13 +68,20 @@ export VENDOR_DEFCONFIG="${VENDOR_DEFCONFIG:-vendor/peridot_GKI.config}"
 # boot-loops on real hardware (verified with the PURE / no-KSU rebuild
 # also failing — the regression is in our toolchain, not in KSU/SUSFS).
 #
-# ZyCromerZ/Clang publishes AOSP-derived clang 21.x prebuilt tarballs
-# on GitHub releases — the closest reproducible match to peridot's
-# stock toolchain we can pull in CI without building clang from source.
-# (Tried AOSP googlesource +archive directly first — endpoint returns
-# 400 / sparse-checkout layout doesn't include the version we want.)
-export CLANG_REPO="${CLANG_REPO:-ZyCromerZ/Clang}"
-export CLANG_DIR="${CLANG_DIR:-$WORKDIR/zycromerz-clang}"
+# Linux Foundation hosts kernel-targeted LLVM tarballs at kernel.org.
+# These are the same builds upstream Linux CI uses, packaged for cross-
+# compiling kernels (--enable-targets=AArch64;ARM;X86;...). 21.1.0 is
+# the stable clang 21 release matching peridot's stock toolchain
+# (clang version 21.0.0 r563880c) closely enough that vendor /system
+# daemons compiled against stock should bind to our kernel cleanly.
+#
+# Empirically clang 23 git-tip (ZyCromerZ) builds a kernel that boots
+# but causes /vendor/bin/cnd to abort in Scudo at WifiQosProvider::
+# initialize() — codegen drift exposing latent UB in libcne.so that
+# stock's clang 21 doesn't trigger.
+export CLANG_VERSION="${CLANG_VERSION:-21.1.0}"
+export CLANG_TARBALL_URL="${CLANG_TARBALL_URL:-https://mirrors.edge.kernel.org/pub/tools/llvm/files/llvm-${CLANG_VERSION}-x86_64.tar.xz}"
+export CLANG_DIR="${CLANG_DIR:-$WORKDIR/llvm-${CLANG_VERSION}}"
 export CC="${CC:-clang}"
 export LLVM=1
 export LLVM_IAS=1
