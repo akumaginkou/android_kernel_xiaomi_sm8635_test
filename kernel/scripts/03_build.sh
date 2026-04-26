@@ -21,10 +21,12 @@ if [ -n "${CLANG_DIR:-}" ] && [ ! -x "$CLANG_DIR/bin/clang" ]; then
     if [ -n "${GITHUB_TOKEN:-}" ]; then
         AUTH_HDR=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
     fi
-    # ZyCromerZ alternates clang 15.x (LTS) and clang 23.x (git-tip) builds, so
-    # /releases/latest is non-deterministic — explicitly grab the newest clang
-    # 23 asset (closest available match to peridot's stock clang 21.0.0).
-    CLANG_MAJOR="${CLANG_MAJOR:-23}"
+    # ZyCromerZ alternates clang 15.x (LTS) and clang 23.x (git-tip) builds.
+    # Empirically clang 15 produces a kernel that progresses further on peridot
+    # (init runs, then dies); clang 23 git-tip regresses — kernel hangs at
+    # bootloader handoff. Stock peridot uses clang 21 (between the two).
+    # Default to 15 (LTS, stable) until we have a clang 21 source.
+    CLANG_MAJOR="${CLANG_MAJOR:-15}"
     ASSET_URL="$(curl -fsSL "${AUTH_HDR[@]}" \
         "https://api.github.com/repos/${CLANG_REPO}/releases?per_page=30" \
         | grep '"browser_download_url"' \
