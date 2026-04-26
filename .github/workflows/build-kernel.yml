@@ -106,14 +106,14 @@ jobs:
         run: |
           echo "[pure] removing KSU/SUSFS/extras fragments — building plain stock peridot kernel"
           rm -f kernel/config/*.fragment
-          # We still need vermagic-compat fragment so EvolutionX's vendor_dlkm
-          # modules (built against the stock kernel's empty LOCALVERSION + KMI)
-          # actually load on top of our rebuilt kernel. Without this:
-          #   - CONFIG_LOCALVERSION_AUTO=y appends -g<sha> -> vermagic differs
-          #   - vendor modules fail symbol/CRC checks -> drivers missing -> early reboot
+          # Belt-and-braces module force-load: even with vermagic exactly
+          # matching stock (we now build from EvolutionX's bka @ 19c833c43b24,
+          # which auto-yields scmversion -g19c833c43b24 via LOCALVERSION_AUTO=y),
+          # leave force-load on so any drift between defconfig fragments and
+          # stock KMI doesn't kill module load.
+          # NOTE: do NOT disable LOCALVERSION_AUTO here — that's what's
+          # producing the matching -g<sha> suffix in the kernel banner.
           cat > kernel/config/00_pure_compat.fragment <<'EOF'
-          CONFIG_LOCALVERSION=""
-          # CONFIG_LOCALVERSION_AUTO is not set
           CONFIG_MODULE_FORCE_LOAD=y
           CONFIG_MODULE_FORCE_UNLOAD=y
           EOF
