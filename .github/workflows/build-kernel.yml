@@ -15,6 +15,10 @@ on:
         description: "susfs4ksu branch (must match kernel KMI)"
         type: string
         default: "gki-android14-6.1"
+      susfs_ref:
+        description: "susfs4ksu commit/tag to pin (empty = HEAD; default = v1.5.12 paired with KSU-Next v1.1.1)"
+        type: string
+        default: "f16560c79f86b29a0a02b0fa3bcab1b4b1ec5fa3"
       release:
         description: "Attach zip to a GitHub Release"
         type: boolean
@@ -42,6 +46,7 @@ jobs:
       KERNEL_BRANCH: ${{ github.event.inputs.kernel_branch || 'lineage-23.2' }}
       KSU_NEXT_TAG:  ${{ github.event.inputs.ksu_next_tag  || 'next-susfs-a14-6.1-dev' }}
       SUSFS_BRANCH:  ${{ github.event.inputs.susfs_branch  || 'gki-android14-6.1' }}
+      SUSFS_REF:     ${{ github.event.inputs.susfs_ref     || 'f16560c79f86b29a0a02b0fa3bcab1b4b1ec5fa3' }}
       WORKDIR:       ${{ github.workspace }}/work
       OUTDIR:        ${{ github.workspace }}/out
       CCACHE_DIR:    ${{ github.workspace }}/.ccache

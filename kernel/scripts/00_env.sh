@@ -38,8 +38,19 @@ export KSU_NEXT_TAG="${KSU_NEXT_TAG:-next-susfs-a14-6.1-dev}"
 # 6.1 kernel line tops out at `android14-6.1` upstream — peridot's
 # lineage-23.2 is kernel 6.1.x (shipped by Xiaomi), so this is the match
 # even when the ROM on top is Android 16.
+#
+# SUSFS_REF pins a specific commit because the susfs API changed
+# breakingly between v1.5.x and v2.0.0:
+#   - HEAD of gki-android14-6.1 is v2.1.0 (`void __user **` struct API)
+#   - KSU-Next next-susfs-a14-6.1-dev v1.1.1 expects v1.5.x (typed pointer
+#     API + SUS_SU_DISABLED / DATA_ADB_* / st_susfs_sus_mount struct).
+#     Building against v2.1.0 yields ~20 compile errors.
+# f16560c = "Bump version to v1.5.12; Synced with KernelSU main ..."
+# (the last v1.5.x commit before the v2.0 rebase). Update both this and
+# KSU_NEXT_TAG together when bumping to a newer pairing.
 export SUSFS_REPO="${SUSFS_REPO:-https://gitlab.com/simonpunk/susfs4ksu.git}"
 export SUSFS_BRANCH="${SUSFS_BRANCH:-gki-android14-6.1}"
+export SUSFS_REF="${SUSFS_REF:-f16560c79f86b29a0a02b0fa3bcab1b4b1ec5fa3}"
 export SUSFS_DIR="${SUSFS_DIR:-$WORKDIR/susfs4ksu}"
 
 # Build target
