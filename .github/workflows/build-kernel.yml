@@ -19,6 +19,10 @@ on:
         description: "susfs4ksu commit/tag (empty = HEAD = latest v2.x)"
         type: string
         default: ""
+      minimal:
+        description: "MINIMAL diagnostic build: KSU only (no SUSFS, no extras). Use to isolate boot loop cause."
+        type: boolean
+        default: false
       release:
         description: "Attach zip to a GitHub Release"
         type: boolean
@@ -47,6 +51,7 @@ jobs:
       RESUKISU_TAG:  ${{ github.event.inputs.resukisu_tag  || 'main' }}
       SUSFS_BRANCH:  ${{ github.event.inputs.susfs_branch  || 'gki-android14-6.1' }}
       SUSFS_REF:     ${{ github.event.inputs.susfs_ref     || '' }}
+      MINIMAL_BUILD: ${{ github.event.inputs.minimal       || 'false' }}
       WORKDIR:       ${{ github.workspace }}/work
       OUTDIR:        ${{ github.workspace }}/out
       CCACHE_DIR:    ${{ github.workspace }}/.ccache
@@ -90,6 +95,24 @@ jobs:
       - name: Install ReSukiSU + apply susfs4ksu kernel patches
         run: bash kernel/scripts/02_patch.sh
 
+      - name: (MINIMAL) swap fragments to KSU-only diagnostic config
+        if: ${{ env.MINIMAL_BUILD == 'true' }}
+        run: |
+          echo "[minimal] disabling extras and SUSFS for diagnostic build"
+          mv kernel/config/extras.fragment kernel/config/extras.fragment.bak
+          cat > kernel/config/ksu_susfs.fragment <<'EOF'
+          # MINIMAL diagnostic build: KSU root only, no SUSFS, no extras.
+          CONFIG_KSU=y
+          CONFIG_KSU_DEBUG=n
+          CONFIG_KSU_TRACEPOINT_HOOK=y
+          CONFIG_KSU_MANUAL_HOOK=n
+          CONFIG_KSU_SUSFS=n
+          CONFIG_KPM=n
+          CONFIG_LOCALVERSION=""
+          EOF
+          export KERNEL_NAME=PeridotMinimal
+          echo "KERNEL_NAME=PeridotMinimal" >> $GITHUB_ENV
+
       - name: Build kernel Image
         run: bash kernel/scripts/03_build.sh
 
@@ -103,7 +126,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PeridotReSukiSU-AnyKernel3-${{ github.run_number }}
+          name: ${{ env.MINIMAL_BUILD == 'true' && 'PeridotMinimal' || 'PeridotReSukiSU' }}-AnyKernel3-${{ github.run_number }}
           path: out/*.zip
           if-no-files-found: error
           retention-days: 30
