@@ -7,6 +7,16 @@ FRAGMENT_DIR="$PROJECT_ROOT/kernel/config"
 
 cd "$KERNEL_DIR"
 
+# Pin scmversion to match stock EvolutionX kernel (-g19c833c43b24).
+# 02_patch.sh applies ReSukiSU + susfs source patches which leave the git
+# working tree dirty — without this override scripts/setlocalversion
+# would tag the build as -g19c833c43b24-dirty, changing vermagic and
+# making EVERY vendor_dlkm module refuse to load on top of our kernel.
+# Writing .scmversion bypasses the git-state probe and forces the exact
+# string stock advertises.
+echo "-g19c833c43b24" > .scmversion
+echo "[build] pinned scmversion to $(cat .scmversion)"
+
 # ---- Toolchain: pull AOSP-genuine clang prebuilt ----
 # topnotchfreaks/clang mirrors AOSP's internal `prebuilts/clang/host/
 # linux-x86/clang-r*` builds on GitHub releases (the AOSP googlesource
