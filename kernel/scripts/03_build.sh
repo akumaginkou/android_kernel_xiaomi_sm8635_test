@@ -7,21 +7,19 @@ FRAGMENT_DIR="$PROJECT_ROOT/kernel/config"
 
 cd "$KERNEL_DIR"
 
-# ---- Toolchain: pull kernel.org Linux Foundation LLVM ----
-# peridot's stock kernel uses clang 21.0.0 r563880c. We use the matching
-# Linux Foundation upstream-kernel clang 21.1.0 tarball hosted on
-# kernel.org — same build flavor (cross-targeted), pinned, single
-# tarball (no GitHub API rate limits).
+# ---- Toolchain: pull AOSP-genuine clang prebuilt ----
+# topnotchfreaks/clang mirrors AOSP's internal `prebuilts/clang/host/
+# linux-x86/clang-r*` builds on GitHub releases (the AOSP googlesource
+# +archive endpoint reliably 400/404s for these specific subtrees).
+# Tarballs unpack flat — bin/, lib/, include/ at the top level — so no
+# strip-components.
 if [ -n "${CLANG_DIR:-}" ] && [ ! -x "$CLANG_DIR/bin/clang" ]; then
-    echo "[build] LLVM ${CLANG_VERSION} not cached, downloading from kernel.org ..."
+    echo "[build] AOSP clang ${CLANG_BUILD} not cached, downloading ..."
     mkdir -p "$CLANG_DIR"
-    TMP_TAR="$(mktemp -t llvm.tar.XXXXXX)"
-    echo "[build] curl -fsSL $CLANG_TARBALL_URL"
+    TMP_TAR="$(mktemp -t aosp-clang.tar.XXXXXX)"
+    echo "[build] curl -fsSL $CLANG_TARBALL_URL  (~1 GB, expect ~30s on GHA)"
     curl -fsSL -o "$TMP_TAR" "$CLANG_TARBALL_URL"
-    # kernel.org tarballs unpack as a single top-level dir like
-    # llvm-21.1.0-x86_64/. Strip that so $CLANG_DIR/bin/clang ends up at
-    # the expected path.
-    tar xJf "$TMP_TAR" -C "$CLANG_DIR" --strip-components=1
+    tar xzf "$TMP_TAR" -C "$CLANG_DIR"
     rm -f "$TMP_TAR"
     chmod -R +x "$CLANG_DIR/bin" 2>/dev/null || true
 fi

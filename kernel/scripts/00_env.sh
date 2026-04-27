@@ -68,20 +68,25 @@ export VENDOR_DEFCONFIG="${VENDOR_DEFCONFIG:-vendor/peridot_GKI.config}"
 # boot-loops on real hardware (verified with the PURE / no-KSU rebuild
 # also failing — the regression is in our toolchain, not in KSU/SUSFS).
 #
-# Linux Foundation hosts kernel-targeted LLVM tarballs at kernel.org.
-# These are the same builds upstream Linux CI uses, packaged for cross-
-# compiling kernels (--enable-targets=AArch64;ARM;X86;...). 21.1.0 is
-# the stable clang 21 release matching peridot's stock toolchain
-# (clang version 21.0.0 r563880c) closely enough that vendor /system
-# daemons compiled against stock should bind to our kernel cleanly.
+# Toolchain: AOSP-genuine clang prebuilt mirrored on GitHub by topnotchfreaks.
 #
-# Empirically clang 23 git-tip (ZyCromerZ) builds a kernel that boots
-# but causes /vendor/bin/cnd to abort in Scudo at WifiQosProvider::
-# initialize() — codegen drift exposing latent UB in libcne.so that
-# stock's clang 21 doesn't trigger.
-export CLANG_VERSION="${CLANG_VERSION:-21.1.0}"
-export CLANG_TARBALL_URL="${CLANG_TARBALL_URL:-https://mirrors.edge.kernel.org/pub/tools/llvm/files/llvm-${CLANG_VERSION}-x86_64.tar.xz}"
-export CLANG_DIR="${CLANG_DIR:-$WORKDIR/llvm-${CLANG_VERSION}}"
+# peridot's stock kernel banner: clang version 21.0.0 r563880c, built with
+# Android's internal toolchain pipeline (+pgo +bolt +lto +mlgo). That exact
+# r563880c artifact only lives on internal Google CI; the closest
+# *publicly accessible* AOSP build is r574158 (one major bump newer, same
+# clang 21 major, same Android +pgo +bolt +lto +mlgo flavor).
+#
+# Why this matters: with kernel.org LF clang 21.1.0 the kernel built and
+# loaded all 504 vendor modules, but /vendor/bin/cnd kept aborting in
+# Scudo at WifiQosProvider::initialize() -> ~CneDriverInterface(). Same
+# crash with ZyC clang 15 / 23. Stock clang's PGO-guided codegen produces
+# slightly different inline/codegen choices that vendor binaries (built
+# against AOSP clang 21) depend on for not-quite-defined-behavior paths
+# in libcne.so. AOSP clang 21 should match.
+export CLANG_TAG="${CLANG_TAG:-v1.0.0}"
+export CLANG_BUILD="${CLANG_BUILD:-r574158}"
+export CLANG_TARBALL_URL="${CLANG_TARBALL_URL:-https://github.com/topnotchfreaks/clang/releases/download/${CLANG_TAG}/clang-${CLANG_BUILD}.tar.gz}"
+export CLANG_DIR="${CLANG_DIR:-$WORKDIR/aosp-clang-${CLANG_BUILD}}"
 export CC="${CC:-clang}"
 export LLVM=1
 export LLVM_IAS=1
